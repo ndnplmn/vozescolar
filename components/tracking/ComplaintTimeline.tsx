@@ -10,14 +10,15 @@ export function ComplaintTimeline({ complaint }: { complaint: Complaint }) {
 
   return (
     <div className="space-y-6">
-      <div className="bg-white rounded-xl border p-4 space-y-2">
+      <div className="border border-crimson-200 p-5 space-y-2">
+        <span className="block w-8 h-0.5 bg-crimson-600 mb-3" />
         <div className="flex items-center justify-between">
           <span className="text-xs text-gray-500 font-mono">Folio: {complaint.folio}</span>
-          <span className={`text-xs px-2 py-0.5 rounded-full border font-medium ${URGENCY_COLORS[complaint.urgency]}`}>
+          <span className={`text-xs px-2 py-0.5 border font-medium ${URGENCY_COLORS[complaint.urgency]}`}>
             {URGENCY_LABELS[complaint.urgency]}
           </span>
         </div>
-        <p className="text-sm text-gray-700 font-medium">{CATEGORY_LABELS[complaint.category]}</p>
+        <p className="font-semibold text-gray-800 text-sm">{CATEGORY_LABELS[complaint.category]}</p>
         <p className="text-xs text-gray-500">
           {new Date(complaint.createdAt).toLocaleDateString("es-MX", { year: "numeric", month: "long", day: "numeric" })}
         </p>
@@ -31,13 +32,15 @@ export function ComplaintTimeline({ complaint }: { complaint: Complaint }) {
           return (
             <div key={status} className="flex gap-4 mb-6">
               <div className="flex flex-col items-center">
-                <div className={`rounded-full p-1 ${isDone ? "text-teal-600" : "text-gray-300"}`}>
+                <div className={isDone ? "text-crimson-600" : "text-gray-300"}>
                   {isDone ? <CheckCircle2 className="w-6 h-6" /> : <Circle className="w-6 h-6" />}
                 </div>
-                {i < STATUS_ORDER.length - 1 && <div className={`w-0.5 h-8 mt-1 ${isDone ? "bg-teal-400" : "bg-gray-200"}`} />}
+                {i < STATUS_ORDER.length - 1 && (
+                  <div className={`w-0.5 h-8 mt-1 ${isDone ? "bg-crimson-400" : "bg-gray-200"}`} />
+                )}
               </div>
               <div className="pt-0.5 pb-4">
-                <p className={`text-sm font-semibold ${isCurrent ? "text-navy-600" : isDone ? "text-gray-700" : "text-gray-400"}`}>
+                <p className={`text-sm font-semibold ${isCurrent ? "text-crimson-600" : isDone ? "text-gray-700" : "text-gray-400"}`}>
                   {STATUS_LABELS[status]}
                 </p>
                 {timelineEntry && (
@@ -46,7 +49,7 @@ export function ComplaintTimeline({ complaint }: { complaint: Complaint }) {
                       {new Date(timelineEntry.timestamp).toLocaleString("es-MX")}
                     </p>
                     {timelineEntry.message && (
-                      <p className="text-sm text-gray-600 mt-1 bg-gray-50 rounded-lg px-3 py-2">{timelineEntry.message}</p>
+                      <p className="text-sm text-gray-600 mt-1 bg-crimson-50 border border-crimson-100 px-3 py-2">{timelineEntry.message}</p>
                     )}
                   </>
                 )}
@@ -57,9 +60,9 @@ export function ComplaintTimeline({ complaint }: { complaint: Complaint }) {
       </div>
 
       {complaint.adminResponse && (
-        <div className="bg-navy-50 border border-navy-100 rounded-xl p-4">
-          <p className="text-xs text-navy-500 font-medium mb-1">Respuesta oficial</p>
-          <p className="text-sm text-navy-700">{complaint.adminResponse}</p>
+        <div className="border border-crimson-200 bg-crimson-50 p-4">
+          <p className="text-xs text-crimson-600 font-semibold tracking-wide uppercase mb-2">Respuesta oficial</p>
+          <p className="text-sm text-gray-700">{complaint.adminResponse}</p>
         </div>
       )}
     </div>

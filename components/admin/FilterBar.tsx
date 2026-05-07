@@ -18,14 +18,14 @@ export function FilterBar({ filters, onChange }: { filters: Filters; onChange: (
         placeholder="Buscar..."
         value={filters.search}
         onChange={(e) => onChange({ ...filters, search: e.target.value })}
-        className="w-48 rounded-lg"
+        className="w-48 rounded-none border-gray-200 focus:border-crimson-400"
       />
       {(["category", "urgency", "status"] as const).map((field) => (
         <Select key={field} value={filters[field]} onValueChange={(v) => onChange({ ...filters, [field]: v })}>
-          <SelectTrigger className="w-36 rounded-lg">
+          <SelectTrigger className="w-36 rounded-none border-gray-200">
             <SelectValue />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="rounded-none">
             <SelectItem value="all">Todos</SelectItem>
             {field === "category" && Object.entries(CATEGORY_LABELS).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
             {field === "urgency" && Object.entries(URGENCY_LABELS).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}

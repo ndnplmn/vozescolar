@@ -26,17 +26,14 @@ export function AIPanel({ complaint }: { complaint: Complaint }) {
   }, [complaint.id]);
 
   function handleSend() {
-    updateComplaint(complaint.id, {
-      adminResponse: response,
-      status: "en_proceso",
-    });
+    updateComplaint(complaint.id, { adminResponse: response, status: "en_proceso" });
     setSent(true);
   }
 
   return (
-    <div className="space-y-6">
-      <div className="bg-white rounded-xl border p-4">
-        <h3 className="font-semibold text-gray-700 mb-4">Análisis de Sentimiento</h3>
+    <div className="space-y-4">
+      <div className="bg-white border border-gray-200 p-4">
+        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-4">Análisis de Sentimiento</p>
         {loading ? <Skeleton className="h-24 w-full" /> : sentiment && (
           <>
             <SentimentGauge score={sentiment.score} />
@@ -44,22 +41,25 @@ export function AIPanel({ complaint }: { complaint: Complaint }) {
           </>
         )}
       </div>
-      <div className="bg-white rounded-xl border p-4">
-        <h3 className="font-semibold text-gray-700 mb-3">Respuesta sugerida por IA</h3>
+      <div className="bg-white border border-gray-200 p-4">
+        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Respuesta sugerida por IA</p>
         {loading ? <Skeleton className="h-32 w-full" /> : (
           <>
             <Textarea
               value={response}
               onChange={(e) => setResponse(e.target.value)}
               rows={5}
-              className="text-sm resize-none rounded-lg mb-3"
+              className="text-sm resize-none rounded-none border-gray-200 mb-3"
             />
             {sent ? (
-              <div className="flex items-center gap-2 text-teal-600 text-sm">
+              <div className="flex items-center gap-2 text-crimson-600 text-sm">
                 <CheckCircle2 className="w-4 h-4" /> Respuesta enviada
               </div>
             ) : (
-              <Button onClick={handleSend} className="w-full bg-navy-600 hover:bg-navy-700 rounded-lg text-sm">
+              <Button
+                onClick={handleSend}
+                className="w-full bg-crimson-600 hover:bg-crimson-700 rounded-none text-sm"
+              >
                 Enviar respuesta oficial
               </Button>
             )}

@@ -3,8 +3,8 @@ import "./globals.css";
 import { Toaster } from "sonner";
 
 export const metadata: Metadata = {
-  title: "VozEscolar — Buzón Digital Escolar",
-  description: "Reporta situaciones de manera segura y confidencial en tu escuela.",
+  title: "VozEscolar — CETIS 52 Hermenegildo Galeana",
+  description: "Plataforma segura y confidencial para reportar situaciones en el CETIS 52 Hermenegildo Galeana.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

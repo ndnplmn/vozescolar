@@ -59,9 +59,10 @@ export function Step2Chat({
 
   return (
     <div>
-      <h2 className="text-2xl font-bold text-navy-600 mb-2">Cuéntanos qué pasó</h2>
+      <span className="block w-8 h-0.5 bg-crimson-600 mb-5" />
+      <h2 className="font-serif text-2xl font-bold text-gray-900 mb-1">Cuéntanos qué pasó</h2>
       <p className="text-xs text-gray-400 mb-4">Tu información está protegida</p>
-      <div className="bg-gray-50 rounded-xl p-4 h-64 overflow-y-auto mb-4 space-y-3">
+      <div className="bg-gray-50 border border-crimson-100 p-4 h-64 overflow-y-auto mb-4 space-y-3">
         <AnimatePresence>
           {messages.map((msg, i) => (
             <motion.div
@@ -70,10 +71,10 @@ export function Step2Chat({
               animate={{ opacity: 1, y: 0 }}
               className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
             >
-              <div className={`max-w-[80%] rounded-2xl px-4 py-2 text-sm ${
+              <div className={`max-w-[80%] px-4 py-2 text-sm ${
                 msg.role === "user"
-                  ? "bg-navy-600 text-white rounded-br-sm"
-                  : "bg-white border border-gray-200 text-gray-700 rounded-bl-sm"
+                  ? "bg-crimson-600 text-white"
+                  : "bg-white border border-crimson-100 text-gray-700"
               }`}>
                 {msg.content}
               </div>
@@ -82,8 +83,8 @@ export function Step2Chat({
         </AnimatePresence>
         {loading && (
           <div className="flex justify-start">
-            <div className="bg-white border border-gray-200 rounded-2xl rounded-bl-sm px-4 py-2">
-              <Loader2 className="w-4 h-4 animate-spin text-teal-600" />
+            <div className="bg-white border border-crimson-100 px-4 py-2">
+              <Loader2 className="w-4 h-4 animate-spin text-crimson-600" />
             </div>
           </div>
         )}
@@ -94,11 +95,15 @@ export function Step2Chat({
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="Escribe aquí..."
-          className="resize-none rounded-xl"
+          className="resize-none rounded-none border-crimson-200 focus:border-crimson-600"
           rows={2}
           onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
         />
-        <Button onClick={sendMessage} disabled={loading || !input.trim()} className="bg-teal-600 hover:bg-teal-700 self-end rounded-xl px-4">
+        <Button
+          onClick={sendMessage}
+          disabled={loading || !input.trim()}
+          className="bg-crimson-600 hover:bg-crimson-700 self-end rounded-none px-4"
+        >
           <Send className="w-4 h-4" />
         </Button>
       </div>

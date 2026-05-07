@@ -32,19 +32,23 @@ export function Step3Category({
 
   return (
     <div>
-      <h2 className="text-2xl font-bold text-navy-600 mb-2">Categoría detectada</h2>
-      <p className="text-gray-500 mb-6">La IA identificó el tipo de reporte. Puedes ajustarlo si es necesario.</p>
+      <span className="block w-8 h-0.5 bg-crimson-600 mb-5" />
+      <h2 className="font-serif text-2xl font-bold text-gray-900 mb-1">Categoría detectada</h2>
+      <p className="text-sm text-gray-500 mb-6">La IA identificó el tipo de reporte. Puedes ajustarlo si es necesario.</p>
       {loading ? (
-        <div className="flex items-center gap-3 text-gray-500"><Loader2 className="animate-spin w-5 h-5 text-teal-600" /> Analizando tu reporte...</div>
+        <div className="flex items-center gap-3 text-gray-500">
+          <Loader2 className="animate-spin w-5 h-5 text-crimson-600" />
+          Analizando tu reporte...
+        </div>
       ) : (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
           {urgency && (
-            <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border text-sm font-medium mb-4 ${URGENCY_COLORS[urgency]}`}>
+            <div className={`inline-flex items-center gap-2 px-3 py-1.5 border text-sm font-medium mb-4 ${URGENCY_COLORS[urgency]}`}>
               Urgencia: {URGENCY_LABELS[urgency]}
             </div>
           )}
           {urgency === "critical" && (
-            <div className="bg-red-50 border border-red-200 rounded-xl p-3 mb-4 text-sm text-red-700">
+            <div className="bg-red-50 border border-red-200 p-3 mb-4 text-sm text-red-700">
               Este reporte fue marcado como crítico. Será atendido con máxima prioridad.
             </div>
           )}
@@ -53,8 +57,10 @@ export function Step3Category({
               <button
                 key={cat}
                 onClick={() => setCategory(cat)}
-                className={`p-3 rounded-xl border-2 text-sm font-medium transition-all ${
-                  category === cat ? "border-teal-500 bg-teal-50 text-teal-700" : "border-gray-200 text-gray-600 hover:border-gray-300"
+                className={`p-3 border-2 text-sm font-medium transition-all ${
+                  category === cat
+                    ? "border-crimson-600 bg-crimson-50 text-crimson-700"
+                    : "border-gray-200 text-gray-600 hover:border-crimson-200"
                 }`}
               >
                 {CATEGORY_LABELS[cat]}
@@ -64,7 +70,7 @@ export function Step3Category({
           <Button
             onClick={() => category && urgency && onComplete(category, urgency)}
             disabled={!category || !urgency}
-            className="w-full bg-navy-600 hover:bg-navy-700 rounded-xl"
+            className="w-full bg-crimson-600 hover:bg-crimson-700 rounded-none"
           >
             Continuar
           </Button>

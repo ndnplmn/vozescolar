@@ -9,9 +9,9 @@ export function StepIndicator({ current }: { current: number }) {
       {STEPS.map((label, i) => (
         <div key={i} className="flex items-center">
           <div className="flex flex-col items-center">
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold transition-all ${
-              i < current ? "bg-teal-600 text-white" :
-              i === current ? "bg-navy-600 text-white ring-2 ring-navy-300" :
+            <div className={`w-8 h-8 flex items-center justify-center text-xs font-semibold transition-all ${
+              i < current ? "bg-crimson-600 text-white" :
+              i === current ? "bg-crimson-600 text-white ring-2 ring-crimson-200" :
               "bg-gray-100 text-gray-400"
             }`}>
               {i < current ? <Check className="w-4 h-4" /> : i + 1}
@@ -19,7 +19,7 @@ export function StepIndicator({ current }: { current: number }) {
             <span className="text-[10px] mt-1 text-gray-500 hidden sm:block">{label}</span>
           </div>
           {i < STEPS.length - 1 && (
-            <div className={`h-0.5 w-6 sm:w-10 mx-1 transition-all ${i < current ? "bg-teal-600" : "bg-gray-200"}`} />
+            <div className={`h-0.5 w-6 sm:w-10 mx-1 transition-all ${i < current ? "bg-crimson-600" : "bg-gray-200"}`} />
           )}
         </div>
       ))}

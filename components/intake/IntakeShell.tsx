@@ -11,6 +11,8 @@ import { Role, Category, Urgency, Complaint, TimelineEntry } from "@/lib/types";
 import { generateFolio, hashContent } from "@/lib/utils";
 import { saveComplaint } from "@/lib/storage";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
+import Link from "next/link";
 
 export function IntakeShell() {
   const router = useRouter();
@@ -53,19 +55,43 @@ export function IntakeShell() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-navy-50 to-white flex items-center justify-center px-4 py-8">
-      <div className="w-full max-w-lg bg-white rounded-2xl shadow-xl p-6 md:p-8">
-        <StepIndicator current={step} />
-        <AnimatePresence mode="wait">
-          <motion.div key={step} variants={variants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.25 }}>
-            {step === 0 && <Step1Role onSelect={(r) => { setRole(r); setStep(1); }} />}
-            {step === 1 && <Step2Chat userRole={role} onComplete={(c) => { setContent(c); setStep(2); }} />}
-            {step === 2 && <Step3Category content={content} onComplete={(cat, urg) => { setCategory(cat); setUrgency(urg); setStep(3); }} />}
-            {step === 3 && <Step4Evidence onComplete={(b64, name) => { setEvidenceBase64(b64); setEvidenceName(name); setStep(4); }} />}
-            {step === 4 && <Step5Confirm role={role} content={content} category={category} urgency={urgency} onSubmit={handleSubmit} />}
-          </motion.div>
-        </AnimatePresence>
-      </div>
+    <div className="min-h-screen bg-white flex flex-col">
+      <header className="border-b border-crimson-200">
+        <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-4">
+            <Image src="/cetis52-logo.svg" alt="CETIS 52" width={40} height={40} className="rounded" />
+            <div>
+              <p className="text-[11px] font-semibold tracking-widest text-crimson-600 uppercase">CETIS 52</p>
+              <p className="text-sm font-medium text-gray-800 leading-tight">Hermenegildo Galeana</p>
+            </div>
+          </Link>
+          <span className="text-xs text-gray-400 hidden sm:block">Canal confidencial de reportes</span>
+        </div>
+      </header>
+
+      <main className="flex-1 flex items-center justify-center px-4 py-12">
+        <div className="w-full max-w-lg">
+          <div className="border border-crimson-200 bg-white p-8">
+            <StepIndicator current={step} />
+            <AnimatePresence mode="wait">
+              <motion.div key={step} variants={variants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.25 }}>
+                {step === 0 && <Step1Role onSelect={(r) => { setRole(r); setStep(1); }} />}
+                {step === 1 && <Step2Chat userRole={role} onComplete={(c) => { setContent(c); setStep(2); }} />}
+                {step === 2 && <Step3Category content={content} onComplete={(cat, urg) => { setCategory(cat); setUrgency(urg); setStep(3); }} />}
+                {step === 3 && <Step4Evidence onComplete={(b64, name) => { setEvidenceBase64(b64); setEvidenceName(name); setStep(4); }} />}
+                {step === 4 && <Step5Confirm role={role} content={content} category={category} urgency={urgency} onSubmit={handleSubmit} />}
+              </motion.div>
+            </AnimatePresence>
+          </div>
+        </div>
+      </main>
+
+      <footer className="border-t border-crimson-200 py-4">
+        <div className="max-w-6xl mx-auto px-6 flex items-center justify-between text-xs text-gray-400">
+          <span>© {new Date().getFullYear()} CETIS 52 Hermenegildo Galeana</span>
+          <span className="text-crimson-600 font-medium">VozEscolar</span>
+        </div>
+      </footer>
     </div>
   );
 }

@@ -1,9 +1,10 @@
 export const SCHOOL_CONFIG_KEY = "vozescolar_school_config";
 
 export const DEFAULT_SCHOOL_CONFIG = {
-  name: "Escuela Primaria Benito Juárez",
-  logoUrl: "",
-  primaryColor: "#1e3a5f",
+  name: "CETIS 52 Hermenegildo Galeana",
+  shortName: "CETIS 52",
+  logoUrl: "/cetis52-logo.svg",
+  primaryColor: "#76082c",
 };
 
 export function getSchoolConfig() {

@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,33 +6,26 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222 47% 18%;
-    --card: 0 0% 100%;
-    --card-foreground: 222 47% 18%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 18%;
-    --primary: 213 52% 24%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 173 82% 32%;
-    --secondary-foreground: 0 0% 100%;
-    --muted: 210 40% 96%;
-    --muted-foreground: 215 16% 47%;
-    --accent: 173 82% 32%;
-    --accent-foreground: 0 0% 100%;
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 100%;
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
-    --ring: 213 52% 24%;
-    --radius: 0.75rem;
-  }
-  .dark {
-    --background: 222 47% 8%;
-    --foreground: 210 40% 98%;
-    --primary: 213 52% 60%;
-    --muted: 217 32% 17%;
-    --border: 217 32% 17%;
+    --background:            0 0% 100%;
+    --foreground:            0 0% 7%;
+    --card:                  0 0% 100%;
+    --card-foreground:       0 0% 7%;
+    --popover:               0 0% 100%;
+    --popover-foreground:    0 0% 7%;
+    --primary:               345 83% 25%;
+    --primary-foreground:    0 0% 100%;
+    --secondary:             345 20% 93%;
+    --secondary-foreground:  345 83% 25%;
+    --muted:                 0 0% 97%;
+    --muted-foreground:      0 0% 42%;
+    --accent:                345 20% 93%;
+    --accent-foreground:     345 83% 25%;
+    --destructive:           0 84% 60%;
+    --destructive-foreground:0 0% 100%;
+    --border:                345 15% 88%;
+    --input:                 345 15% 88%;
+    --ring:                  345 83% 25%;
+    --radius:                0.5rem;
   }
 }
 
@@ -41,6 +34,14 @@
     border-color: hsl(var(--border));
   }
   body {
-    @apply bg-background text-foreground font-sans;
+    @apply bg-white text-gray-900 font-sans antialiased;
   }
+  h1, h2 {
+    @apply font-serif;
+  }
+}
+
+/* Harvard-style institutional divider */
+.divider-crimson {
+  @apply block w-12 h-0.5 bg-crimson-600 mb-6;
 }
