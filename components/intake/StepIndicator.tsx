@@ -1,5 +1,4 @@
 "use client";
-import { motion } from "framer-motion";
 import { Check } from "lucide-react";
 
 const STEPS = ["Quién eres", "Cuéntanos", "Categoría", "Evidencia", "Confirmar"];
