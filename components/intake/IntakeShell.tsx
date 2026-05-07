@@ -9,7 +9,8 @@ import { Step4Evidence } from "./Step4Evidence";
 import { Step5Confirm } from "./Step5Confirm";
 import { Role, Category, Urgency, Complaint, TimelineEntry } from "@/lib/types";
 import { generateFolio, hashContent } from "@/lib/utils";
-import { saveComplaint } from "@/lib/storage";
+import { saveComplaint, StorageFullError } from "@/lib/storage";
+import { AlertTriangle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
@@ -19,6 +20,7 @@ export function IntakeShell() {
   const router = useRouter();
   const [step, setStep] = useState(0);
   const [submitted, setSubmitted] = useState(false);
+  const [storageError, setStorageError] = useState(false);
 
   // Warn before leaving mid-flow
   useEffect(() => {
@@ -70,7 +72,15 @@ export function IntakeShell() {
       evidenceBase64,
       evidenceName,
     };
-    saveComplaint(complaint);
+    try {
+      saveComplaint(complaint);
+    } catch (e) {
+      setSubmitted(false);
+      if (e instanceof StorageFullError) {
+        setStorageError(true);
+      }
+      return;
+    }
     router.push(`/seguimiento/${folio}?nuevo=true`);
   }
 
@@ -100,6 +110,19 @@ export function IntakeShell() {
 
       <main className="flex-1 flex items-start justify-center px-4 py-10">
         <div className="w-full max-w-lg">
+
+          {/* Storage full error */}
+          {storageError && (
+            <div className="flex items-start gap-3 bg-red-50 border border-red-200 px-4 py-3 mb-4">
+              <AlertTriangle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+              <div>
+                <p className="text-xs font-semibold text-red-800">No fue posible guardar el reporte</p>
+                <p className="text-xs text-red-700 mt-0.5">
+                  El almacenamiento del navegador está lleno. Intenta desde otro navegador o dispositivo.
+                </p>
+              </div>
+            </div>
+          )}
 
           {/* Progress bar */}
           <div className="h-0.5 bg-crimson-100 mb-0 overflow-hidden">

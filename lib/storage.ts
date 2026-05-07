@@ -2,11 +2,25 @@ import { Complaint } from "./types";
 
 const COMPLAINTS_KEY = "vozescolar_complaints";
 
+export class StorageFullError extends Error {
+  constructor() {
+    super("El almacenamiento local está lleno.");
+    this.name = "StorageFullError";
+  }
+}
+
 export function saveComplaint(complaint: Complaint): void {
   if (typeof window === "undefined") return;
   const existing = getLocalComplaints();
   existing.push(complaint);
-  localStorage.setItem(COMPLAINTS_KEY, JSON.stringify(existing));
+  try {
+    localStorage.setItem(COMPLAINTS_KEY, JSON.stringify(existing));
+  } catch (e) {
+    if (e instanceof DOMException && (e.name === "QuotaExceededError" || e.name === "NS_ERROR_DOM_QUOTA_REACHED")) {
+      throw new StorageFullError();
+    }
+    throw e;
+  }
 }
 
 export function getLocalComplaints(): Complaint[] {
@@ -30,6 +44,10 @@ export function updateComplaint(id: string, updates: Partial<Complaint>): void {
   const idx = complaints.findIndex((c) => c.id === id);
   if (idx !== -1) {
     complaints[idx] = { ...complaints[idx], ...updates };
-    localStorage.setItem(COMPLAINTS_KEY, JSON.stringify(complaints));
+    try {
+      localStorage.setItem(COMPLAINTS_KEY, JSON.stringify(complaints));
+    } catch {
+      // update failures are non-critical; ignore silently
+    }
   }
 }
