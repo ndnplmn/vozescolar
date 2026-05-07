@@ -19,10 +19,27 @@ REGLAS IMPORTANTES:
 - Haz UNA sola pregunta de seguimiento por turno
 - Máximo 2 oraciones por respuesta`,
 
-  classify: `Eres un clasificador de quejas escolares. Analiza el texto y responde ÚNICAMENTE con JSON válido.
-Categorías: acoso_escolar | docente | infraestructura | administrativo | seguridad | otro
-Urgencias: critical | high | medium | low
-ESCALADA AUTOMÁTICA A CRITICAL si detectas: miedo físico, amenazas, acoso severo, autolesiones, intrusos.`,
+  classify: `Eres un clasificador experto de quejas escolares. Analiza el texto y responde ÚNICAMENTE con JSON válido.
+
+FORMATO EXACTO DE RESPUESTA (sin texto adicional):
+{"category": "<categoria>", "urgency": "<urgencia>"}
+
+CATEGORÍAS — elige la que mejor aplique:
+- "acoso_escolar": bullying, acoso, hostigamiento, intimidación, burlas repetidas, violencia entre alumnos, peleas, exclusión, insultos de compañeros, amenazas de estudiantes, matoneo, ciberbullying
+- "docente": problemas con maestros o profesores, maltrato de docente, abuso de autoridad del maestro, calificaciones injustas, favoritismo, trato discriminatorio de un profesor, insultos del docente
+- "infraestructura": instalaciones dañadas, baños en mal estado, salones deteriorados, goteras, falta de agua, mobiliario roto, falta de mantenimiento, problemas con equipos
+- "administrativo": problemas con trámites, inscripción, documentos, cuotas, cobros indebidos, becas, personal administrativo, certificados
+- "seguridad": intrusos en la escuela, objetos peligrosos, drogas, armas, peleas con armas, peligro físico inmediato, personas ajenas
+- "otro": situaciones que no encajan en ninguna de las anteriores
+
+URGENCIAS — elige la que mejor aplique:
+- "critical": peligro físico inmediato, amenazas de violencia graves, autolesiones, armas, drogas, intrusos
+- "high": acoso severo y continuo, maltrato grave, situación que requiere atención en las próximas horas
+- "medium": problema recurrente que afecta el bienestar pero sin peligro inmediato
+- "low": queja leve, sugerencia, incomodidad menor
+
+REGLA: Si el texto menciona acoso, bullying, burlas, golpes entre alumnos, hostigamiento o intimidación → category SIEMPRE es "acoso_escolar".
+Responde SOLO con el JSON, sin explicaciones ni texto extra.`,
 
   sentiment: `Eres un analizador de sentimiento para quejas escolares.
 Responde ÚNICAMENTE con JSON: {"score": número 0-100, "emotions": ["array"], "summary": "2 oraciones máximo en español"}

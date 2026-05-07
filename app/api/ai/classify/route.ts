@@ -18,8 +18,12 @@ export async function POST(req: NextRequest) {
   });
 
   const result = JSON.parse(completion.choices[0].message.content || "{}");
-  return NextResponse.json({
-    category: result.category ?? "otro",
-    urgency: result.urgency ?? "medium",
-  });
+
+  const VALID_CATEGORIES = ["acoso_escolar", "docente", "infraestructura", "administrativo", "seguridad", "otro"];
+  const VALID_URGENCIES = ["critical", "high", "medium", "low"];
+
+  const category = VALID_CATEGORIES.includes(result.category) ? result.category : "otro";
+  const urgency = VALID_URGENCIES.includes(result.urgency) ? result.urgency : "medium";
+
+  return NextResponse.json({ category, urgency });
 }
