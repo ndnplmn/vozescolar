@@ -1,12 +1,19 @@
 "use client";
 import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Category, Urgency } from "@/lib/types";
-import { CATEGORY_LABELS, URGENCY_LABELS, URGENCY_COLORS } from "@/lib/utils";
-import { Loader2 } from "lucide-react";
+import { URGENCY_LABELS, URGENCY_COLORS } from "@/lib/utils";
+import { Loader2, AlertTriangle, ArrowRight, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-const CATEGORIES: Category[] = ["acoso_escolar","docente","infraestructura","administrativo","seguridad","otro"];
+const CATEGORIES: { value: Category; label: string; desc: string }[] = [
+  { value: "acoso_escolar",  label: "Acoso escolar",    desc: "Bullying, hostigamiento o violencia entre alumnos" },
+  { value: "docente",        label: "Docente",           desc: "Problemas con maestros o profesores" },
+  { value: "infraestructura",label: "Infraestructura",   desc: "Instalaciones dañadas o en mal estado" },
+  { value: "administrativo", label: "Administrativo",    desc: "Trámites, cuotas o personal de oficina" },
+  { value: "seguridad",      label: "Seguridad",         desc: "Intrusos, armas, drogas o peligro físico" },
+  { value: "otro",           label: "Otro",              desc: "Situación que no encaja en las anteriores" },
+];
 
 export function Step3Category({
   content,
@@ -18,6 +25,7 @@ export function Step3Category({
   const [category, setCategory] = useState<Category | null>(null);
   const [urgency, setUrgency] = useState<Urgency | null>(null);
   const [loading, setLoading] = useState(true);
+  const [aiPicked, setAiPicked] = useState<Category | null>(null);
 
   useEffect(() => {
     fetch("/api/ai/classify", {
@@ -26,53 +34,114 @@ export function Step3Category({
       body: JSON.stringify({ content }),
     })
       .then((r) => r.json())
-      .then((data) => { setCategory(data.category); setUrgency(data.urgency); })
+      .then((data) => {
+        setCategory(data.category);
+        setAiPicked(data.category);
+        setUrgency(data.urgency);
+      })
       .finally(() => setLoading(false));
   }, [content]);
+
+  const isModified = category !== aiPicked && aiPicked !== null;
 
   return (
     <div>
       <span className="block w-8 h-0.5 bg-crimson-600 mb-5" />
-      <h2 className="font-serif text-2xl font-bold text-gray-900 mb-1">Categoría detectada</h2>
-      <p className="text-sm text-gray-500 mb-6">La IA identificó el tipo de reporte. Puedes ajustarlo si es necesario.</p>
+      <h2 className="font-serif text-2xl font-bold text-gray-900 mb-1">Categoría del reporte</h2>
+      <p className="text-sm text-gray-500 mb-6">
+        La inteligencia artificial identificó el tipo de situación. Puedes ajustarlo si no es correcto.
+      </p>
+
       {loading ? (
-        <div className="flex items-center gap-3 text-gray-500">
-          <Loader2 className="animate-spin w-5 h-5 text-crimson-600" />
-          Analizando tu reporte...
+        <div className="flex flex-col items-center justify-center py-12 gap-4">
+          <div className="relative">
+            <div className="w-12 h-12 border-2 border-crimson-100 rounded-full" />
+            <Loader2 className="w-12 h-12 text-crimson-600 animate-spin absolute inset-0" />
+          </div>
+          <div className="text-center">
+            <p className="text-sm font-medium text-gray-700">Analizando tu reporte...</p>
+            <p className="text-xs text-gray-400 mt-1">La IA está identificando la categoría</p>
+          </div>
         </div>
       ) : (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
+
+          {/* AI selection indicator */}
+          {aiPicked && !isModified && (
+            <div className="flex items-center gap-2 mb-4 text-xs text-gray-500">
+              <Sparkles className="w-3.5 h-3.5 text-crimson-400 shrink-0" />
+              <span>La IA detectó: <strong className="text-gray-700">{CATEGORIES.find(c => c.value === aiPicked)?.label}</strong></span>
+            </div>
+          )}
+          {isModified && (
+            <div className="flex items-center gap-2 mb-4 text-xs text-amber-600">
+              <Sparkles className="w-3.5 h-3.5 shrink-0" />
+              <span>Categoría ajustada manualmente</span>
+            </div>
+          )}
+
+          {/* Urgency badge */}
           {urgency && (
-            <div className={`inline-flex items-center gap-2 px-3 py-1.5 border text-sm font-medium mb-4 ${URGENCY_COLORS[urgency]}`}>
-              Urgencia: {URGENCY_LABELS[urgency]}
+            <div className={`inline-flex items-center gap-2 px-3 py-1.5 border text-xs font-semibold mb-4 ${URGENCY_COLORS[urgency]}`}>
+              Urgencia detectada: {URGENCY_LABELS[urgency]}
             </div>
           )}
-          {urgency === "critical" && (
-            <div className="bg-red-50 border border-red-200 p-3 mb-4 text-sm text-red-700">
-              Este reporte fue marcado como crítico. Será atendido con máxima prioridad.
-            </div>
-          )}
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-6">
-            {CATEGORIES.map((cat) => (
-              <button
-                key={cat}
-                onClick={() => setCategory(cat)}
-                className={`p-3 border-2 text-sm font-medium transition-all ${
-                  category === cat
-                    ? "border-crimson-600 bg-crimson-50 text-crimson-700"
-                    : "border-gray-200 text-gray-600 hover:border-crimson-200"
-                }`}
+
+          {/* Critical alert */}
+          <AnimatePresence>
+            {urgency === "critical" && (
+              <motion.div
+                initial={{ opacity: 0, y: -4 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex items-start gap-3 bg-red-50 border border-red-200 px-4 py-3 mb-5"
               >
-                {CATEGORY_LABELS[cat]}
-              </button>
-            ))}
+                <AlertTriangle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-xs font-semibold text-red-800">Reporte crítico</p>
+                  <p className="text-xs text-red-700 mt-0.5">Este caso será atendido con máxima prioridad por la dirección del CETIS 52.</p>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Category grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-6">
+            {CATEGORIES.map(({ value, label, desc }) => {
+              const isSelected = category === value;
+              const isAI = aiPicked === value;
+              return (
+                <button
+                  key={value}
+                  onClick={() => setCategory(value)}
+                  className={`p-3.5 border-2 text-left transition-all group ${
+                    isSelected
+                      ? "border-crimson-600 bg-crimson-50"
+                      : "border-gray-200 hover:border-crimson-300 hover:bg-crimson-50/30"
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <p className={`text-sm font-semibold leading-tight ${isSelected ? "text-crimson-700" : "text-gray-700"}`}>
+                        {label}
+                      </p>
+                      <p className="text-xs text-gray-400 mt-0.5 leading-snug">{desc}</p>
+                    </div>
+                    {isAI && (
+                      <span className="text-[9px] font-bold tracking-wide text-crimson-400 uppercase shrink-0 mt-0.5">IA</span>
+                    )}
+                  </div>
+                </button>
+              );
+            })}
           </div>
+
           <Button
             onClick={() => category && urgency && onComplete(category, urgency)}
             disabled={!category || !urgency}
-            className="w-full bg-crimson-600 hover:bg-crimson-700 rounded-none"
+            className="w-full bg-crimson-600 hover:bg-crimson-700 rounded-none h-11 text-sm font-semibold gap-2 group"
           >
-            Continuar
+            Confirmar categoría
+            <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
           </Button>
         </motion.div>
       )}
