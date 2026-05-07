@@ -1,6 +1,13 @@
 import Groq from "groq-sdk";
 
-export const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+let _groq: Groq | null = null;
+
+export function getGroq(): Groq {
+  if (!_groq) {
+    _groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+  }
+  return _groq;
+}
 
 export const SYSTEM_PROMPTS = {
   intake: `Eres un asistente empático de VozEscolar, un sistema seguro para reportar situaciones en escuelas.

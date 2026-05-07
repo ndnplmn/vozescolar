@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { groq, SYSTEM_PROMPTS } from "@/lib/groq";
+import { getGroq, SYSTEM_PROMPTS } from "@/lib/groq";
+
+export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
   const { complaints } = await req.json();
@@ -10,7 +12,7 @@ export async function POST(req: NextRequest) {
     )
     .join("\n");
 
-  const completion = await groq.chat.completions.create({
+  const completion = await getGroq().chat.completions.create({
     model: "llama-3.3-70b-versatile",
     messages: [
       { role: "system", content: SYSTEM_PROMPTS.monthlySummary },
