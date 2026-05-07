@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Category, Urgency, Role } from "@/lib/types";
 import { CATEGORY_LABELS, URGENCY_LABELS, URGENCY_COLORS, ROLE_LABELS } from "@/lib/utils";
-import { Shield, ChevronDown, Lock } from "lucide-react";
+import { Shield, ChevronDown, Lock, Loader2, Send } from "lucide-react";
 
 export function Step5Confirm({
   role,
@@ -23,6 +23,9 @@ export function Step5Confirm({
   const [isAnonymous, setIsAnonymous] = useState(true);
   const [loading, setLoading] = useState(false);
   const [privacyOpen, setPrivacyOpen] = useState(false);
+  const [contentExpanded, setContentExpanded] = useState(false);
+
+  const isLong = content.length > 220;
 
   async function handleSubmit() {
     setLoading(true);
@@ -35,6 +38,7 @@ export function Step5Confirm({
       <h2 className="font-serif text-2xl font-bold text-gray-900 mb-1">Confirmar reporte</h2>
       <p className="text-sm text-gray-500 mb-6">Revisa los detalles antes de enviar.</p>
 
+      {/* Summary card */}
       <div className="border border-crimson-100 bg-gray-50 p-4 mb-4 space-y-3">
         <div className="flex justify-between text-sm">
           <span className="text-gray-500">Rol</span>
@@ -52,7 +56,19 @@ export function Step5Confirm({
         </div>
         <div className="border-t border-crimson-100 pt-3 text-sm">
           <span className="text-gray-500">Descripción</span>
-          <p className="mt-1 text-gray-700 line-clamp-3">{content}</p>
+          <div className="mt-1 relative">
+            <p className={`text-gray-700 leading-relaxed text-sm ${!contentExpanded && isLong ? "line-clamp-3" : ""}`}>
+              {content}
+            </p>
+            {isLong && (
+              <button
+                onClick={() => setContentExpanded((v) => !v)}
+                className="mt-1 text-xs text-crimson-600 hover:text-crimson-700 font-medium transition-colors"
+              >
+                {contentExpanded ? "Ver menos" : "Ver completo"}
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -66,7 +82,7 @@ export function Step5Confirm({
               <p className="text-xs text-gray-500">No se guardará ningún dato personal</p>
             </div>
           </div>
-          <Switch checked={isAnonymous} onCheckedChange={setIsAnonymous} />
+          <Switch checked={isAnonymous} onCheckedChange={setIsAnonymous} disabled={loading} />
         </div>
       </div>
 
@@ -110,9 +126,19 @@ export function Step5Confirm({
       <Button
         onClick={handleSubmit}
         disabled={loading}
-        className="w-full bg-crimson-600 hover:bg-crimson-700 rounded-none py-3 text-sm font-semibold tracking-wide h-auto"
+        className="w-full bg-crimson-600 hover:bg-crimson-700 rounded-none h-12 text-sm font-semibold tracking-wide gap-2"
       >
-        {loading ? "Enviando..." : "Enviar reporte"}
+        {loading ? (
+          <>
+            <Loader2 className="w-4 h-4 animate-spin" />
+            Enviando reporte...
+          </>
+        ) : (
+          <>
+            <Send className="w-4 h-4" />
+            Enviar reporte
+          </>
+        )}
       </Button>
 
       <p className="text-center text-[11px] text-gray-400 mt-3 flex items-center justify-center gap-1">

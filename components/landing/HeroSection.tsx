@@ -80,7 +80,6 @@ export function HeroSection() {
             <nav className="hidden md:flex items-center gap-7">
               <a href="#como-funciona" className="text-sm text-gray-500 hover:text-crimson-600 transition-colors">Cómo funciona</a>
               <Link href="/seguimiento" className="text-sm text-gray-500 hover:text-crimson-600 transition-colors">Consultar folio</Link>
-              <Link href="/admin" className="text-sm text-gray-500 hover:text-crimson-600 transition-colors">Administración</Link>
               <Link href="/nueva-queja">
                 <Button size="sm" className="bg-crimson-600 hover:bg-crimson-700 rounded-none text-xs px-5 h-8 tracking-wide font-semibold">
                   Hacer un reporte
@@ -103,7 +102,6 @@ export function HeroSection() {
                 <div className="px-6 py-5 flex flex-col gap-4 bg-white">
                   <a href="#como-funciona" onClick={() => setMobileOpen(false)} className="text-sm text-gray-700">Cómo funciona</a>
                   <Link href="/seguimiento" onClick={() => setMobileOpen(false)} className="text-sm text-gray-700">Consultar folio</Link>
-                  <Link href="/admin" onClick={() => setMobileOpen(false)} className="text-sm text-gray-700">Administración</Link>
                   <Link href="/nueva-queja" onClick={() => setMobileOpen(false)}>
                     <Button className="w-full bg-crimson-600 hover:bg-crimson-700 rounded-none text-sm">Hacer un reporte</Button>
                   </Link>
@@ -353,6 +351,7 @@ export function HeroSection() {
             <div className="flex items-center gap-6">
               <Link href="/seguimiento" className="hover:text-crimson-600 transition-colors">Consultar folio</Link>
               <Link href="/nueva-queja" className="hover:text-crimson-600 transition-colors">Hacer reporte</Link>
+              <Link href="/admin" className="hover:text-crimson-600 transition-colors opacity-40 hover:opacity-100">Portal admin</Link>
               <span className="text-crimson-600 font-semibold tracking-wide">VozEscolar</span>
             </div>
           </div>

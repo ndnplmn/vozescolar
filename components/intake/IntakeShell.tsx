@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { StepIndicator } from "./StepIndicator";
 import { Step1Role } from "./Step1Role";
@@ -18,6 +18,18 @@ import { ChevronLeft } from "lucide-react";
 export function IntakeShell() {
   const router = useRouter();
   const [step, setStep] = useState(0);
+  const [submitted, setSubmitted] = useState(false);
+
+  // Warn before leaving mid-flow
+  useEffect(() => {
+    if (step === 0 || submitted) return;
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [step, submitted]);
   const [dir, setDir] = useState(1);
   const [role, setRole] = useState<Role>("alumno");
   const [content, setContent] = useState("");
@@ -38,6 +50,7 @@ export function IntakeShell() {
   }
 
   async function handleSubmit(isAnonymous: boolean) {
+    setSubmitted(true);
     const folio = generateFolio();
     const hash = await hashContent(content);
     const now = new Date().toISOString();
