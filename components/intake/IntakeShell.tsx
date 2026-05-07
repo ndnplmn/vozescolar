@@ -71,7 +71,17 @@ export function IntakeShell() {
 
       <main className="flex-1 flex items-center justify-center px-4 py-12">
         <div className="w-full max-w-lg">
-          <div className="border border-crimson-200 bg-white p-8">
+          {/* Progress bar */}
+          <div className="h-1 bg-crimson-100 mb-0">
+            <motion.div
+              className="h-full bg-crimson-600"
+              initial={{ width: 0 }}
+              animate={{ width: `${((step + 1) / 5) * 100}%` }}
+              transition={{ duration: 0.4, ease: "easeOut" }}
+            />
+          </div>
+
+          <div className="border border-t-0 border-crimson-200 bg-white p-8">
             <StepIndicator current={step} />
             <AnimatePresence mode="wait">
               <motion.div key={step} variants={variants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.25 }}>
