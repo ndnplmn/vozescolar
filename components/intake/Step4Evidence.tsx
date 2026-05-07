@@ -35,7 +35,7 @@ export function Step4Evidence({
       </div>
       {file && (
         <div className="flex items-center gap-3 bg-crimson-50 border border-crimson-200 p-3 mb-4">
-          {file.name.endsWith(".pdf") ? <FileText className="w-5 h-5 text-crimson-600" /> : <Image className="w-5 h-5 text-crimson-600" alt="" />}
+          {file.name.endsWith(".pdf") ? <FileText className="w-5 h-5 text-crimson-600" /> : <Image className="w-5 h-5 text-crimson-600" />}
           <span className="text-sm text-crimson-700 flex-1 truncate">{file.name}</span>
           <button onClick={() => setFile(null)}><X className="w-4 h-4 text-gray-400" /></button>
         </div>
