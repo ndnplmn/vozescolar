@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Role } from "@/lib/types";
-import { Send, ArrowRight, AlertTriangle } from "lucide-react";
+import { Send, ArrowRight, AlertTriangle, CheckCircle2, Loader2 } from "lucide-react";
 
 interface Message { role: "assistant" | "user"; content: string; }
 
@@ -25,18 +25,13 @@ function hasCrisis(text: string) {
   return CRISIS_KEYWORDS.some((k) => lower.includes(k));
 }
 
-function TypingDots() {
+function BlinkingCursor() {
   return (
-    <div className="flex items-center gap-1 px-4 py-3">
-      {[0, 1, 2].map((i) => (
-        <motion.span
-          key={i}
-          className="w-1.5 h-1.5 rounded-full bg-crimson-400"
-          animate={{ opacity: [0.3, 1, 0.3], y: [0, -3, 0] }}
-          transition={{ duration: 1.1, repeat: Infinity, delay: i * 0.18, ease: "easeInOut" }}
-        />
-      ))}
-    </div>
+    <motion.span
+      className="inline-block w-0.5 h-3.5 bg-gray-400 ml-0.5 align-text-bottom"
+      animate={{ opacity: [1, 0] }}
+      transition={{ duration: 0.6, repeat: Infinity, repeatType: "reverse", ease: "linear" }}
+    />
   );
 }
 
@@ -51,21 +46,51 @@ export function Step2Chat({
     { role: "assistant", content: ROLE_OPENERS[userRole] },
   ]);
   const [input, setInput] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [streaming, setStreaming] = useState(false);
   const [ready, setReady] = useState(false);
   const [crisis, setCrisis] = useState(false);
   const [wordCount, setWordCount] = useState(0);
+
+  // Summary state
+  const [summary, setSummary] = useState<string | null>(null);
+  const [summaryLoading, setSummaryLoading] = useState(false);
+  const [summaryFetched, setSummaryFetched] = useState(false);
+
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, loading]);
+  }, [messages, streaming]);
 
   const userMessages = messages.filter((m) => m.role === "user");
-  const totalWords = userMessages.reduce((acc, m) => acc + m.content.split(/\s+/).filter(Boolean).length, 0);
+  const totalWords = userMessages.reduce(
+    (acc, m) => acc + m.content.split(/\s+/).filter(Boolean).length,
+    0
+  );
 
   useEffect(() => { setWordCount(totalWords); }, [totalWords]);
+
+  const canContinue = ready || wordCount >= 15;
+
+  // Fetch summary once canContinue becomes true
+  useEffect(() => {
+    if (!canContinue || summaryFetched || userMessages.length === 0) return;
+    setSummaryFetched(true);
+    setSummaryLoading(true);
+
+    const allUserText = userMessages.map((m) => m.content).join(" ");
+    fetch("/api/ai/summary", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ content: allUserText }),
+    })
+      .then((r) => r.json())
+      .then((data) => setSummary(data.summary ?? ""))
+      .catch(() => setSummary(""))
+      .finally(() => setSummaryLoading(false));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [canContinue]);
 
   const handleContinue = useCallback(() => {
     const allUserText = userMessages.map((m) => m.content).join(" ");
@@ -73,40 +98,98 @@ export function Step2Chat({
   }, [userMessages, onComplete]);
 
   async function sendMessage() {
-    if (!input.trim() || loading) return;
+    if (!input.trim() || streaming) return;
     const text = input.trim();
     const userMsg: Message = { role: "user", content: text };
     const newMessages = [...messages, userMsg];
-    setMessages(newMessages);
+
+    setMessages([...newMessages, { role: "assistant", content: "" }]);
     setInput("");
 
-    if (hasCrisis(text)) {
-      setCrisis(true);
-    }
+    if (hasCrisis(text)) setCrisis(true);
 
-    setLoading(true);
+    setStreaming(true);
+
     try {
       const res = await fetch("/api/ai/followup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ role: userRole, messages: newMessages }),
       });
-      const data = await res.json();
-      setMessages((prev) => [...prev, { role: "assistant", content: data.question }]);
-      if (data.ready) setReady(true);
+
+      if (!res.body) throw new Error("No stream body");
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let fullText = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const parts = buffer.split("\n\n");
+        buffer = parts.pop() ?? "";
+
+        for (const part of parts) {
+          if (!part.startsWith("data: ")) continue;
+          const raw = part.slice(6);
+          if (raw === "[DONE]") continue;
+
+          try {
+            const event = JSON.parse(raw);
+
+            if (event.type === "delta") {
+              fullText += event.text;
+              const displayText = fullText.replace(/\[READY\]\s*$/m, "").trimEnd();
+              setMessages((prev) => {
+                const msgs = [...prev];
+                msgs[msgs.length - 1] = { role: "assistant", content: displayText };
+                return msgs;
+              });
+            } else if (event.type === "fallback") {
+              fullText = event.text;
+              setMessages((prev) => {
+                const msgs = [...prev];
+                msgs[msgs.length - 1] = { role: "assistant", content: fullText };
+                return msgs;
+              });
+              setReady(true);
+            }
+          } catch {
+            // ignore parse errors on partial chunks
+          }
+        }
+      }
+
+      // Final pass: strip [READY] marker and detect it
+      const cleanText = fullText.replace(/\[READY\]\s*$/m, "").trimEnd();
+      setMessages((prev) => {
+        const msgs = [...prev];
+        msgs[msgs.length - 1] = { role: "assistant", content: cleanText };
+        return msgs;
+      });
+
+      if (fullText.includes("[READY]")) setReady(true);
     } catch {
-      setMessages((prev) => [...prev, {
-        role: "assistant",
-        content: "¿Hay algo más que quieras agregar, o está bien así para continuar?",
-      }]);
+      setMessages((prev) => {
+        const msgs = [...prev];
+        msgs[msgs.length - 1] = {
+          role: "assistant",
+          content: "¿Hay algo más que quieras agregar, o está bien así para continuar?",
+        };
+        return msgs;
+      });
       setReady(true);
     } finally {
-      setLoading(false);
+      setStreaming(false);
     }
   }
 
-  const canSend = input.trim().length > 0 && !loading;
-  const canContinue = ready || wordCount >= 15;
+  const canSend = input.trim().length > 0 && !streaming;
+  const isLastAssistant = (i: number) =>
+    i === messages.length - 1 && messages[i].role === "assistant";
 
   return (
     <div>
@@ -156,35 +239,23 @@ export function Step2Chat({
                     VE
                   </span>
                 )}
-                <div className={`max-w-[82%] px-3.5 py-2.5 text-sm leading-relaxed ${
-                  msg.role === "user"
-                    ? "bg-crimson-600 text-white"
-                    : "bg-white border border-crimson-100 text-gray-700"
-                }`}>
+                <div
+                  className={`max-w-[82%] px-3.5 py-2.5 text-sm leading-relaxed ${
+                    msg.role === "user"
+                      ? "bg-crimson-600 text-white"
+                      : "bg-white border border-crimson-100 text-gray-700"
+                  }`}
+                >
                   {msg.content}
+                  {streaming && isLastAssistant(i) && <BlinkingCursor />}
                 </div>
               </motion.div>
             ))}
           </AnimatePresence>
-
-          {loading && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="flex justify-start"
-            >
-              <span className="w-5 h-5 rounded-full bg-crimson-600 flex items-center justify-center text-white text-[8px] font-bold mr-2 mt-1 shrink-0">
-                VE
-              </span>
-              <div className="bg-white border border-crimson-100">
-                <TypingDots />
-              </div>
-            </motion.div>
-          )}
           <div ref={bottomRef} />
         </div>
 
-        {/* Word count feedback */}
+        {/* Word count hint */}
         {wordCount > 0 && !canContinue && (
           <div className="px-4 py-1.5 border-t border-crimson-50 bg-white">
             <p className="text-[11px] text-gray-400">
@@ -220,16 +291,41 @@ export function Step2Chat({
       </div>
       <p className="text-[11px] text-gray-400 mb-4">Enter para enviar · Shift+Enter para nueva línea</p>
 
-      {/* Continue CTA */}
+      {/* Summary + CTA */}
       <AnimatePresence>
         {canContinue && (
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
+            className="space-y-3"
           >
+            {/* Summary card */}
+            <div className="border border-crimson-100 bg-crimson-50/40 px-4 py-3.5">
+              <div className="flex items-center gap-2 mb-2">
+                <CheckCircle2 className="w-3.5 h-3.5 text-crimson-500 shrink-0" />
+                <p className="text-[11px] font-semibold text-crimson-700 uppercase tracking-wide">
+                  Lo que entendimos de tu reporte
+                </p>
+              </div>
+              {summaryLoading || summary === null ? (
+                <div className="flex items-center gap-2 py-1">
+                  <Loader2 className="w-3.5 h-3.5 text-crimson-400 animate-spin" />
+                  <p className="text-xs text-gray-400">Generando resumen...</p>
+                </div>
+              ) : summary ? (
+                <p className="text-sm text-gray-700 leading-relaxed">{summary}</p>
+              ) : null}
+              {!summaryLoading && summary !== null && (
+                <p className="text-[11px] text-gray-400 mt-2">
+                  ¿No es correcto? Puedes seguir escribiendo para aclarar.
+                </p>
+              )}
+            </div>
+
             <Button
               onClick={handleContinue}
+              disabled={summaryLoading}
               className="w-full bg-crimson-600 hover:bg-crimson-700 rounded-none h-11 text-sm font-semibold tracking-wide gap-2 group"
             >
               Continuar con el reporte
