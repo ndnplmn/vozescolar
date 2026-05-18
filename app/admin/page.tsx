@@ -3,30 +3,31 @@ import { useEffect, useMemo, useState } from "react";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { ComplaintCard } from "@/components/admin/ComplaintCard";
 import { FilterBar, Filters } from "@/components/admin/FilterBar";
-import { MOCK_COMPLAINTS } from "@/lib/mock-data";
-import { getLocalComplaints } from "@/lib/storage";
 import { Complaint } from "@/lib/types";
 
 export default function AdminPage() {
-  const [local, setLocal] = useState<Complaint[]>([]);
+  const [complaints, setComplaints] = useState<Complaint[]>([]);
+  const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState<Filters>({ search: "", category: "all", urgency: "all", status: "all" });
 
-  useEffect(() => { setLocal(getLocalComplaints()); }, []);
+  useEffect(() => {
+    fetch("/api/admin/complaints")
+      .then((r) => r.json())
+      .then((d) => setComplaints(d.complaints ?? []))
+      .finally(() => setLoading(false));
+  }, []);
 
-  const all = useMemo(() => {
-    const merged = [...local, ...MOCK_COMPLAINTS].sort(
-      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    );
-    return merged.filter((c) => {
+  const filtered = useMemo(() => {
+    return complaints.filter((c) => {
       if (filters.category !== "all" && c.category !== filters.category) return false;
       if (filters.urgency !== "all" && c.urgency !== filters.urgency) return false;
       if (filters.status !== "all" && c.status !== filters.status) return false;
       if (filters.search && !c.content.toLowerCase().includes(filters.search.toLowerCase())) return false;
       return true;
     });
-  }, [local, filters]);
+  }, [complaints, filters]);
 
-  const criticalCount = all.filter((c) => c.urgency === "critical").length;
+  const criticalCount = filtered.filter((c) => c.urgency === "critical").length;
 
   return (
     <AdminLayout>
@@ -35,7 +36,9 @@ export default function AdminPage() {
           <div>
             <span className="block w-8 h-0.5 bg-crimson-600 mb-3" />
             <h1 className="font-serif text-2xl font-bold text-gray-900">Bandeja de Reportes</h1>
-            <p className="text-gray-500 text-sm mt-1">{all.length} reportes totales</p>
+            <p className="text-gray-500 text-sm mt-1">
+              {loading ? "Cargando..." : `${filtered.length} reportes`}
+            </p>
           </div>
           {criticalCount > 0 && (
             <div className="border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 font-medium">
@@ -45,8 +48,11 @@ export default function AdminPage() {
         </div>
         <FilterBar filters={filters} onChange={setFilters} />
         <div className="space-y-2">
-          {all.map((c, i) => <ComplaintCard key={c.id} complaint={c} index={i} />)}
-          {all.length === 0 && (
+          {loading && (
+            <div className="text-center py-16 text-gray-400 text-sm">Cargando reportes...</div>
+          )}
+          {!loading && filtered.map((c, i) => <ComplaintCard key={c.id} complaint={c} index={i} />)}
+          {!loading && filtered.length === 0 && (
             <div className="text-center py-16 text-gray-400 text-sm">
               No se encontraron reportes con los filtros seleccionados.
             </div>

@@ -1,9 +1,7 @@
 "use client";
 import { useEffect, useState, useCallback } from "react";
 import { useParams } from "next/navigation";
-import { MOCK_COMPLAINTS } from "@/lib/mock-data";
-import { getLocalComplaints, updateComplaint } from "@/lib/storage";
-import { Complaint, Status, TimelineEntry } from "@/lib/types";
+import { Complaint, Status } from "@/lib/types";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { AIPanel } from "@/components/admin/AIPanel";
 import { CATEGORY_LABELS, URGENCY_LABELS, URGENCY_COLORS, STATUS_LABELS, ROLE_LABELS } from "@/lib/utils";
@@ -32,28 +30,32 @@ export default function ComplaintDetailPage() {
   const [justAdvanced, setJustAdvanced] = useState(false);
 
   useEffect(() => {
-    const all = [...getLocalComplaints(), ...MOCK_COMPLAINTS];
-    setComplaint(all.find((c) => c.id === id) ?? null);
+    fetch(`/api/complaints/${id}`)
+      .then((r) => r.json())
+      .then((d) => setComplaint(d.complaint ?? null));
   }, [id]);
 
-  const advanceStatus = useCallback(() => {
+  const advanceStatus = useCallback(async () => {
     if (!complaint) return;
     const currentIdx = STATUS_FLOW.indexOf(complaint.status as Status);
     if (currentIdx === -1 || currentIdx >= STATUS_FLOW.length - 1) return;
 
     setAdvancing(true);
     const nextStatus = STATUS_FLOW[currentIdx + 1];
-    const newEntry: TimelineEntry = { status: nextStatus, timestamp: new Date().toISOString() };
-    const updatedTimeline = [...complaint.timeline, newEntry];
 
-    updateComplaint(complaint.id, { status: nextStatus, timeline: updatedTimeline });
-    setComplaint((prev) => prev ? { ...prev, status: nextStatus, timeline: updatedTimeline } : null);
+    const res = await fetch(`/api/complaints/${complaint.id}/status`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status: nextStatus }),
+    });
 
-    setTimeout(() => {
-      setAdvancing(false);
+    if (res.ok) {
+      setComplaint((prev) => prev ? { ...prev, status: nextStatus } : null);
       setJustAdvanced(true);
       setTimeout(() => setJustAdvanced(false), 2500);
-    }, 400);
+    }
+
+    setAdvancing(false);
   }, [complaint]);
 
   if (!complaint) return null;

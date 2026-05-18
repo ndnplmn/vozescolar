@@ -11,7 +11,8 @@ const NAV = [
   { href: "/admin/configuracion", label: "Configuración", icon: Settings },
 ];
 
-function handleSignOut() {
+async function handleSignOut() {
+  await fetch("/api/admin/auth", { method: "DELETE" });
   sessionStorage.removeItem("vozescolar_admin_auth");
   window.location.reload();
 }

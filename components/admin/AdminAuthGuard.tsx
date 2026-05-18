@@ -7,7 +7,6 @@ import { Lock, ShieldAlert, Eye, EyeOff } from "lucide-react";
 import Image from "next/image";
 
 const SESSION_KEY = "vozescolar_admin_auth";
-const PIN = process.env.NEXT_PUBLIC_ADMIN_PIN ?? "cetis52";
 
 export function AdminAuthGuard({ children }: { children: React.ReactNode }) {
   const [authenticated, setAuthenticated] = useState<boolean | null>(null);
@@ -15,13 +14,25 @@ export function AdminAuthGuard({ children }: { children: React.ReactNode }) {
   const [error, setError] = useState(false);
   const [show, setShow] = useState(false);
   const [shaking, setShaking] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     setAuthenticated(sessionStorage.getItem(SESSION_KEY) === "1");
   }, []);
 
-  function handleSubmit() {
-    if (pin === PIN) {
+  async function handleSubmit() {
+    if (!pin) return;
+    setLoading(true);
+
+    const res = await fetch("/api/admin/auth", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ pin }),
+    });
+
+    setLoading(false);
+
+    if (res.ok) {
       sessionStorage.setItem(SESSION_KEY, "1");
       setAuthenticated(true);
     } else {
@@ -33,9 +44,7 @@ export function AdminAuthGuard({ children }: { children: React.ReactNode }) {
     }
   }
 
-  // Still checking sessionStorage
   if (authenticated === null) return null;
-
   if (authenticated) return <>{children}</>;
 
   return (
@@ -86,10 +95,10 @@ export function AdminAuthGuard({ children }: { children: React.ReactNode }) {
 
             <Button
               onClick={handleSubmit}
-              disabled={!pin}
-              className="w-full bg-crimson-600 hover:bg-crimson-700 rounded-none text-sm font-semibold tracking-wide"
+              disabled={!pin || loading}
+              className="w-full bg-crimson-600 hover:bg-crimson-700 rounded-none text-sm font-semibold tracking-wide disabled:opacity-60"
             >
-              Ingresar
+              {loading ? "Verificando..." : "Ingresar"}
             </Button>
           </div>
 

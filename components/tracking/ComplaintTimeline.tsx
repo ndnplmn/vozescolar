@@ -3,7 +3,6 @@ import { useState, useCallback } from "react";
 import { Complaint } from "@/lib/types";
 import { STATUS_LABELS, CATEGORY_LABELS, URGENCY_LABELS, URGENCY_COLORS } from "@/lib/utils";
 import { CheckCircle2, Circle, RotateCw, Clock } from "lucide-react";
-import { getComplaintByFolio } from "@/lib/storage";
 import { motion, AnimatePresence } from "framer-motion";
 
 const STATUS_ORDER = ["recibida", "en_revision", "en_proceso", "resuelta"] as const;
@@ -23,22 +22,23 @@ function timeAgo(iso: string): string {
   return `hace ${Math.floor(diff / 86400)} d`;
 }
 
-export function ComplaintTimeline({ complaint: initialComplaint }: { complaint: Complaint }) {
-  const [complaint, setComplaint] = useState(initialComplaint);
+interface Props {
+  complaint: Complaint;
+  onRefresh: () => Promise<void>;
+}
+
+export function ComplaintTimeline({ complaint, onRefresh }: Props) {
   const [refreshing, setRefreshing] = useState(false);
   const [lastRefresh, setLastRefresh] = useState(new Date().toISOString());
 
   const currentIdx = STATUS_ORDER.indexOf(complaint.status as typeof STATUS_ORDER[number]);
 
-  const handleRefresh = useCallback(() => {
+  const handleRefresh = useCallback(async () => {
     setRefreshing(true);
-    setTimeout(() => {
-      const fresh = getComplaintByFolio(complaint.folio);
-      if (fresh) setComplaint(fresh);
-      setLastRefresh(new Date().toISOString());
-      setRefreshing(false);
-    }, 600);
-  }, [complaint.folio]);
+    await onRefresh();
+    setLastRefresh(new Date().toISOString());
+    setRefreshing(false);
+  }, [onRefresh]);
 
   return (
     <div className="space-y-6">

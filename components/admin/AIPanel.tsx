@@ -5,7 +5,6 @@ import { SentimentGauge } from "./SentimentGauge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { updateComplaint } from "@/lib/storage";
 import { CheckCircle2 } from "lucide-react";
 
 export function AIPanel({ complaint }: { complaint: Complaint }) {
@@ -13,6 +12,7 @@ export function AIPanel({ complaint }: { complaint: Complaint }) {
   const [response, setResponse] = useState(complaint.adminResponse ?? "");
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [sending, setSending] = useState(false);
 
   useEffect(() => {
     Promise.all([
@@ -25,9 +25,15 @@ export function AIPanel({ complaint }: { complaint: Complaint }) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [complaint.id]);
 
-  function handleSend() {
-    updateComplaint(complaint.id, { adminResponse: response, status: "en_proceso" });
-    setSent(true);
+  async function handleSend() {
+    setSending(true);
+    const res = await fetch(`/api/complaints/${complaint.id}/response`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ response }),
+    });
+    if (res.ok) setSent(true);
+    setSending(false);
   }
 
   return (
@@ -58,9 +64,10 @@ export function AIPanel({ complaint }: { complaint: Complaint }) {
             ) : (
               <Button
                 onClick={handleSend}
-                className="w-full bg-crimson-600 hover:bg-crimson-700 rounded-none text-sm"
+                disabled={sending}
+                className="w-full bg-crimson-600 hover:bg-crimson-700 rounded-none text-sm disabled:opacity-60"
               >
-                Enviar respuesta oficial
+                {sending ? "Enviando..." : "Enviar respuesta oficial"}
               </Button>
             )}
           </>

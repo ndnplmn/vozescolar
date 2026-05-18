@@ -1,8 +1,8 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams, useSearchParams } from "next/navigation";
-import { getComplaintByFolio } from "@/lib/storage";
 import { Complaint } from "@/lib/types";
+import { supabase } from "@/lib/supabase";
 import { ComplaintTimeline } from "@/components/tracking/ComplaintTimeline";
 import { motion } from "framer-motion";
 import { CheckCircle2, AlertCircle, Copy, Check, PlusCircle, Home } from "lucide-react";
@@ -17,9 +17,33 @@ export default function TrackingPage() {
   const [complaint, setComplaint] = useState<Complaint | null | undefined>(undefined);
   const [copied, setCopied] = useState(false);
 
-  useEffect(() => {
-    setComplaint(getComplaintByFolio(folio));
+  const fetchComplaint = useCallback(async () => {
+    const res = await fetch(`/api/complaints/${folio}`);
+    if (!res.ok) { setComplaint(null); return; }
+    const data = await res.json();
+    setComplaint(data.complaint);
   }, [folio]);
+
+  useEffect(() => {
+    fetchComplaint();
+
+    // Realtime: re-fetch on any change to this complaint row
+    const channel = supabase
+      .channel(`complaint-${folio}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "complaints", filter: `folio=eq.${folio}` },
+        () => fetchComplaint()
+      )
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "timeline_entries" },
+        () => fetchComplaint()
+      )
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [folio, fetchComplaint]);
 
   function copyFolio() {
     navigator.clipboard.writeText(folio).then(() => {
@@ -70,7 +94,6 @@ export default function TrackingPage() {
                 </div>
               </div>
 
-              {/* Folio copy box */}
               <div className="bg-white border border-green-200 px-4 py-3 flex items-center justify-between mb-4">
                 <div>
                   <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-0.5">Tu folio</p>
@@ -85,7 +108,6 @@ export default function TrackingPage() {
                 </button>
               </div>
 
-              {/* Next step CTAs */}
               <div className="flex gap-3">
                 <Link href="/nueva-queja" className="flex-1">
                   <Button
@@ -110,7 +132,7 @@ export default function TrackingPage() {
           )}
 
           {complaint ? (
-            <ComplaintTimeline complaint={complaint} />
+            <ComplaintTimeline complaint={complaint} onRefresh={fetchComplaint} />
           ) : (
             <div className="text-center py-16">
               <AlertCircle className="w-12 h-12 text-gray-300 mx-auto mb-4" />

@@ -7,9 +7,7 @@ import { Step2Chat } from "./Step2Chat";
 import { Step3Category } from "./Step3Category";
 import { Step4Evidence } from "./Step4Evidence";
 import { Step5Confirm } from "./Step5Confirm";
-import { Role, Category, Urgency, Complaint, TimelineEntry } from "@/lib/types";
-import { generateFolio, hashContent } from "@/lib/utils";
-import { saveComplaint, StorageFullError } from "@/lib/storage";
+import { Role, Category, Urgency } from "@/lib/types";
 import { AlertTriangle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
@@ -20,7 +18,7 @@ export function IntakeShell() {
   const router = useRouter();
   const [step, setStep] = useState(0);
   const [submitted, setSubmitted] = useState(false);
-  const [storageError, setStorageError] = useState(false);
+  const [submitError, setSubmitError] = useState(false);
 
   // Warn before leaving mid-flow
   useEffect(() => {
@@ -32,6 +30,7 @@ export function IntakeShell() {
     window.addEventListener("beforeunload", handler);
     return () => window.removeEventListener("beforeunload", handler);
   }, [step, submitted]);
+
   const [dir, setDir] = useState(1);
   const [role, setRole] = useState<Role>("alumno");
   const [content, setContent] = useState("");
@@ -53,44 +52,45 @@ export function IntakeShell() {
 
   async function handleSubmit(isAnonymous: boolean) {
     setSubmitted(true);
-    const folio = generateFolio();
-    const hash = await hashContent(content);
-    const now = new Date().toISOString();
-    const timeline: TimelineEntry[] = [{ status: "recibida", timestamp: now }];
-    const complaint: Complaint = {
-      id: crypto.randomUUID(),
-      folio,
-      role,
-      content,
-      category,
-      urgency,
-      status: "recibida",
-      isAnonymous,
-      contentHash: hash,
-      createdAt: now,
-      timeline,
-      evidenceBase64,
-      evidenceName,
-    };
+    setSubmitError(false);
+
     try {
-      saveComplaint(complaint);
-    } catch (e) {
-      setSubmitted(false);
-      if (e instanceof StorageFullError) {
-        setStorageError(true);
+      const res = await fetch("/api/complaints", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          role,
+          content,
+          category,
+          urgency,
+          isAnonymous,
+          evidenceBase64: evidenceBase64 ?? null,
+          evidenceName:   evidenceName   ?? null,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || !data.folio) {
+        setSubmitted(false);
+        setSubmitError(true);
+        return;
       }
-      return;
+
+      router.push(`/seguimiento/${data.folio}?nuevo=true`);
+    } catch {
+      setSubmitted(false);
+      setSubmitError(true);
     }
-    router.push(`/seguimiento/${folio}?nuevo=true`);
   }
 
   const TOTAL = 5;
   const progress = Math.round(((step + 1) / TOTAL) * 100);
 
   const variants = {
-    enter: (d: number) => ({ opacity: 0, x: d * 28 }),
+    enter:  (d: number) => ({ opacity: 0, x: d * 28 }),
     center: { opacity: 1, x: 0 },
-    exit: (d: number) => ({ opacity: 0, x: d * -28 }),
+    exit:   (d: number) => ({ opacity: 0, x: d * -28 }),
   };
 
   return (
@@ -111,14 +111,13 @@ export function IntakeShell() {
       <main className="flex-1 flex items-start justify-center px-4 py-10">
         <div className="w-full max-w-lg">
 
-          {/* Storage full error */}
-          {storageError && (
+          {submitError && (
             <div className="flex items-start gap-3 bg-red-50 border border-red-200 px-4 py-3 mb-4">
               <AlertTriangle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
               <div>
-                <p className="text-xs font-semibold text-red-800">No fue posible guardar el reporte</p>
+                <p className="text-xs font-semibold text-red-800">No fue posible enviar el reporte</p>
                 <p className="text-xs text-red-700 mt-0.5">
-                  El almacenamiento del navegador está lleno. Intenta desde otro navegador o dispositivo.
+                  Ocurrió un error al guardar. Verifica tu conexión e intenta de nuevo.
                 </p>
               </div>
             </div>
@@ -134,7 +133,6 @@ export function IntakeShell() {
           </div>
 
           <div className="border border-t-0 border-crimson-200 bg-white">
-            {/* Step header with back button */}
             <div className="flex items-center justify-between px-8 pt-6 pb-0">
               {step > 0 ? (
                 <button
@@ -144,15 +142,12 @@ export function IntakeShell() {
                   <ChevronLeft className="w-3.5 h-3.5 transition-transform group-hover:-translate-x-0.5" />
                   Volver
                 </button>
-              ) : (
-                <span />
-              )}
+              ) : <span />}
               <span className="text-[11px] text-gray-400 tabular-nums font-medium">
                 {step + 1} <span className="text-gray-300">/ {TOTAL}</span>
               </span>
             </div>
 
-            {/* Step content */}
             <div className="px-8 pb-8 pt-4">
               <StepIndicator current={step} />
               <AnimatePresence mode="wait" custom={dir}>
@@ -175,7 +170,6 @@ export function IntakeShell() {
             </div>
           </div>
 
-          {/* Bottom security note */}
           <p className="text-center text-[11px] text-gray-400 mt-4">
             Conexión segura · Sin registro de IP · 100% confidencial
           </p>
