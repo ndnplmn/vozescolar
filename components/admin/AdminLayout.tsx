@@ -2,13 +2,14 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, BarChart3, Settings, LogOut } from "lucide-react";
+import { LayoutDashboard, BarChart3, Settings, LogOut, BookOpen } from "lucide-react";
 import { AdminAuthGuard } from "./AdminAuthGuard";
 
 const NAV = [
-  { href: "/admin", label: "Bandeja", icon: LayoutDashboard },
-  { href: "/admin/analiticas", label: "Analíticas", icon: BarChart3 },
+  { href: "/admin",               label: "Bandeja",      icon: LayoutDashboard },
+  { href: "/admin/analiticas",    label: "Analíticas",   icon: BarChart3 },
   { href: "/admin/configuracion", label: "Configuración", icon: Settings },
+  { href: "/admin/ayuda",         label: "Guía de uso",  icon: BookOpen },
 ];
 
 async function handleSignOut() {

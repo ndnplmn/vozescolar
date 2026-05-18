@@ -351,7 +351,10 @@ export function HeroSection() {
             <div className="flex items-center gap-6">
               <Link href="/seguimiento" className="hover:text-crimson-600 transition-colors">Consultar folio</Link>
               <Link href="/nueva-queja" className="hover:text-crimson-600 transition-colors">Hacer reporte</Link>
-              <Link href="/admin" className="hover:text-crimson-600 transition-colors opacity-40 hover:opacity-100">Portal admin</Link>
+              <Link href="/admin" className="hover:text-crimson-600 transition-colors flex items-center gap-1.5 opacity-60 hover:opacity-100">
+                <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                Portal admin
+              </Link>
               <span className="text-crimson-600 font-semibold tracking-wide">VozEscolar</span>
             </div>
           </div>
