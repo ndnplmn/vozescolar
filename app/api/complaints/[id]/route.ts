@@ -10,7 +10,7 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   const db = createServerClient();
-  const isFolio = /^VE-\d{4}-\d{4}$/.test(params.id);
+  const isFolio = /^VE-\d{4}-[A-Z0-9]{6}$/i.test(params.id);
 
   const { data, error } = isFolio
     ? await db.from("complaints").select("*, timeline_entries(*)").eq("folio", params.id).single()

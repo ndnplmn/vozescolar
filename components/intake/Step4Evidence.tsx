@@ -2,7 +2,7 @@
 import { useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { X, FileText, UploadCloud, AlertCircle, ArrowRight } from "lucide-react";
+import { X, FileText, UploadCloud, AlertCircle, ArrowRight, EyeOff } from "lucide-react";
 
 const MAX_BYTES = 5 * 1024 * 1024;
 
@@ -48,9 +48,20 @@ export function Step4Evidence({
     <div>
       <span className="block w-8 h-0.5 bg-crimson-600 mb-5" />
       <h2 className="font-serif text-2xl font-bold text-gray-900 mb-1">Evidencia (opcional)</h2>
-      <p className="text-sm text-gray-500 mb-6">
+      <p className="text-sm text-gray-500 mb-4">
         Puedes adjuntar una foto o documento que respalde tu reporte. No es obligatorio.
       </p>
+
+      {/* Privacy warning for anonymous mode */}
+      <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 px-4 py-3 mb-6">
+        <EyeOff className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+        <div>
+          <p className="text-xs font-semibold text-amber-800">Cuidado con tu anonimato</p>
+          <p className="text-xs text-amber-700 mt-0.5 leading-relaxed">
+            Las fotos pueden contener información que te identifique: tu cara, tu mano, el fondo, o metadatos de la cámara. Si eliges modo anónimo, asegúrate de que la imagen no te identifique.
+          </p>
+        </div>
+      </div>
 
       <AnimatePresence mode="wait">
         {!file ? (

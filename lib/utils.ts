@@ -7,9 +7,9 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function generateFolio(): string {
-  const year = new Date().getFullYear();
-  const random = Math.floor(1000 + Math.random() * 9000);
-  return `VE-${year}-${random}`;
+  const year   = new Date().getFullYear();
+  const suffix = crypto.randomUUID().replace(/-/g, "").slice(0, 6).toUpperCase();
+  return `VE-${year}-${suffix}`;
 }
 
 export async function hashContent(content: string): Promise<string> {

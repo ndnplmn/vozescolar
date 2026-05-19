@@ -49,10 +49,11 @@ export async function POST(req: NextRequest) {
         }
 
         controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: "done" })}\n\n`));
-      } catch {
+      } catch (err) {
+        console.error("[ai/followup] Groq error:", err);
         controller.enqueue(
           encoder.encode(
-            `data: ${JSON.stringify({ type: "fallback", text: "¿Hay algo más que quieras agregar, o está bien así para continuar?" })}\n\n`
+            `data: ${JSON.stringify({ type: "error", code: "ai_unavailable" })}\n\n`
           )
         );
       }

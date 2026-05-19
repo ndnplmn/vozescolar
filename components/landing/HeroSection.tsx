@@ -48,6 +48,14 @@ const FAQS = [
     q: "¿En cuánto tiempo responden?",
     a: "Cada reporte recibe una primera revisión dentro de 48 horas hábiles. La resolución depende de la complejidad del caso, pero te mantenemos informado en cada etapa.",
   },
+  {
+    q: "¿Me pueden meter en problemas por reportar?",
+    a: "No. Este sistema existe precisamente para protegerte. Tu reporte es anónimo por defecto — nadie sabrá quién lo envió, ni la persona reportada ni ningún maestro. La dirección del CETIS 52 está obligada a proteger al denunciante.",
+  },
+  {
+    q: "¿Qué pasa si lo que reporto parece insignificante?",
+    a: "No existe un reporte 'sin importancia'. Si algo te incomoda, preocupa o afecta tu bienestar o el de otra persona, merece atención. El equipo está aquí para escucharte, no para juzgar.",
+  },
 ];
 
 const STATS = [

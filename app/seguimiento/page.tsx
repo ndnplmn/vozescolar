@@ -7,7 +7,7 @@ import { Search, AlertCircle } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
-const FOLIO_REGEX = /^VE-\d{4}-\d{4}$/;
+const FOLIO_REGEX = /^VE-\d{4}-[A-Z0-9]{6}$/;
 
 export default function SeguimientoPage() {
   const [folio, setFolio] = useState("");
@@ -24,7 +24,7 @@ export default function SeguimientoPage() {
     const trimmed = folio.trim();
     if (!trimmed) return;
     if (!FOLIO_REGEX.test(trimmed)) {
-      setError("El formato debe ser VE-2026-1234. Revisa tu folio e intenta de nuevo.");
+      setError("El formato debe ser VE-2026-A1B2C3. Revisa tu folio e intenta de nuevo.");
       return;
     }
     router.push(`/seguimiento/${trimmed}`);
@@ -59,7 +59,7 @@ export default function SeguimientoPage() {
             <Input
               value={folio}
               onChange={(e) => handleChange(e.target.value)}
-              placeholder="VE-2026-1234"
+              placeholder="VE-2026-A1B2C3"
               className={`text-center font-mono text-lg mb-1 rounded-none focus:border-crimson-600 ${
                 error ? "border-red-300 focus:border-red-400" : "border-crimson-200"
               }`}
@@ -74,7 +74,7 @@ export default function SeguimientoPage() {
               </div>
             ) : (
               <p className="text-[11px] text-gray-400 text-center mb-4 mt-1">
-                Formato: VE-2026-1234
+                Formato: VE-2026-A1B2C3
               </p>
             )}
 

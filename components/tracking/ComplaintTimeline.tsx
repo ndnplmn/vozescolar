@@ -8,10 +8,10 @@ import { motion, AnimatePresence } from "framer-motion";
 const STATUS_ORDER = ["recibida", "en_revision", "en_proceso", "resuelta"] as const;
 
 const STATUS_DESCRIPTIONS: Record<string, string> = {
-  recibida:    "Tu reporte fue recibido y está en espera de revisión.",
-  en_revision: "El personal del CETIS 52 está revisando tu reporte.",
-  en_proceso:  "Se están tomando acciones para atender la situación.",
-  resuelta:    "El caso ha sido atendido. Revisa la respuesta oficial.",
+  recibida:    "Tu reporte llegó correctamente y está en fila de revisión. El equipo lo leerá pronto — normalmente en menos de 48 horas hábiles.",
+  en_revision: "Alguien del CETIS 52 está leyendo tu reporte ahora mismo. Están evaluando qué acción tomar. No necesitas hacer nada más.",
+  en_proceso:  "Ya se tomaron acciones concretas para atender lo que reportaste. Estamos trabajando en resolverlo.",
+  resuelta:    "El caso fue atendido. Desplázate hacia abajo para leer la respuesta oficial del CETIS 52.",
 };
 
 function timeAgo(iso: string): string {

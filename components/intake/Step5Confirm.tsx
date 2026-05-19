@@ -24,7 +24,7 @@ export function Step5Confirm({
 }) {
   const [isAnonymous, setIsAnonymous] = useState(true);
   const [loading, setLoading] = useState(false);
-  const [privacyOpen, setPrivacyOpen] = useState(false);
+  const [privacyOpen, setPrivacyOpen] = useState(true);
   const [contentExpanded, setContentExpanded] = useState(false);
 
   const isLong = content.length > 220;
@@ -86,17 +86,28 @@ export function Step5Confirm({
       </div>
 
       {/* Anonymous toggle */}
-      <div className="border border-crimson-200 bg-crimson-50 mb-2">
+      <div className={`border mb-2 transition-colors ${isAnonymous ? "border-crimson-200 bg-crimson-50" : "border-red-300 bg-red-50"}`}>
         <div className="flex items-center justify-between p-4">
           <div className="flex items-center gap-2">
-            <Shield className="w-5 h-5 text-crimson-600" />
+            <Shield className={`w-5 h-5 ${isAnonymous ? "text-crimson-600" : "text-red-500"}`} />
             <div>
               <p className="text-sm font-medium text-gray-800">Modo anónimo</p>
-              <p className="text-xs text-gray-500">No se guardará ningún dato personal</p>
+              <p className={`text-xs mt-0.5 ${isAnonymous ? "text-gray-500" : "text-red-600 font-medium"}`}>
+                {isAnonymous
+                  ? "Tu identidad está completamente protegida"
+                  : "⚠ Tu nombre podría quedar registrado"}
+              </p>
             </div>
           </div>
           <Switch checked={isAnonymous} onCheckedChange={setIsAnonymous} disabled={loading} />
         </div>
+        {!isAnonymous && (
+          <div className="px-4 pb-3 pt-0 border-t border-red-200">
+            <p className="text-xs text-red-700 leading-relaxed">
+              Al desactivar el modo anónimo, el personal del CETIS 52 podrá ver tu identidad al leer el reporte. Solo desactívalo si confías plenamente en el proceso y deseas que puedan contactarte.
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Privacy micro-accordion */}

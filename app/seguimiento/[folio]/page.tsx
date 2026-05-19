@@ -5,7 +5,7 @@ import { Complaint } from "@/lib/types";
 import { supabase } from "@/lib/supabase";
 import { ComplaintTimeline } from "@/components/tracking/ComplaintTimeline";
 import { motion } from "framer-motion";
-import { CheckCircle2, AlertCircle, Copy, Check, PlusCircle, Home } from "lucide-react";
+import { CheckCircle2, AlertCircle, Copy, Check, PlusCircle, Home, Wifi, WifiOff } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
@@ -14,8 +14,9 @@ export default function TrackingPage() {
   const { folio } = useParams<{ folio: string }>();
   const searchParams = useSearchParams();
   const isNew = searchParams.get("nuevo") === "true";
-  const [complaint, setComplaint] = useState<Complaint | null | undefined>(undefined);
-  const [copied, setCopied] = useState(false);
+  const [complaint, setComplaint]           = useState<Complaint | null | undefined>(undefined);
+  const [copied, setCopied]                 = useState(false);
+  const [realtimeStatus, setRealtimeStatus] = useState<"connecting" | "connected" | "disconnected">("connecting");
 
   const fetchComplaint = useCallback(async () => {
     const res = await fetch(`/api/complaints/${folio}`);
@@ -40,7 +41,11 @@ export default function TrackingPage() {
         { event: "INSERT", schema: "public", table: "timeline_entries" },
         () => fetchComplaint()
       )
-      .subscribe();
+      .subscribe((status) => {
+        if (status === "SUBSCRIBED")     setRealtimeStatus("connected");
+        else if (status === "CLOSED")    setRealtimeStatus("disconnected");
+        else if (status === "CHANNEL_ERROR") setRealtimeStatus("disconnected");
+      });
 
     return () => { supabase.removeChannel(channel); };
   }, [folio, fetchComplaint]);
@@ -65,7 +70,19 @@ export default function TrackingPage() {
               <p className="text-sm font-medium text-gray-800 leading-tight">Hermenegildo Galeana</p>
             </div>
           </Link>
-          <nav className="flex items-center gap-4">
+          <nav className="flex items-center gap-3">
+            {/* Realtime connection indicator */}
+            <div className="hidden sm:flex items-center gap-1.5 text-[11px]">
+              {realtimeStatus === "connected" && (
+                <><span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" /><span className="text-gray-400">En vivo</span></>
+              )}
+              {realtimeStatus === "connecting" && (
+                <><span className="w-1.5 h-1.5 rounded-full bg-yellow-400 animate-pulse" /><span className="text-gray-400">Conectando...</span></>
+              )}
+              {realtimeStatus === "disconnected" && (
+                <><WifiOff className="w-3 h-3 text-red-400" /><span className="text-red-500 font-medium">Sin conexión — datos podrían estar desactualizados</span></>
+              )}
+            </div>
             <Link href="/" className="text-xs text-gray-500 hover:text-crimson-600 transition-colors flex items-center gap-1.5">
               <Home className="w-3.5 h-3.5" /> Inicio
             </Link>
@@ -89,8 +106,8 @@ export default function TrackingPage() {
               <div className="flex items-start gap-3 mb-4">
                 <CheckCircle2 className="w-5 h-5 text-green-600 shrink-0 mt-0.5" />
                 <div>
-                  <p className="font-semibold text-green-800 text-sm">Reporte enviado exitosamente</p>
-                  <p className="text-xs text-green-700 mt-0.5">Tu queja ha sido registrada. Guarda tu folio para dar seguimiento.</p>
+                  <p className="font-semibold text-green-800 text-sm">Tu reporte llegó correctamente</p>
+                  <p className="text-xs text-green-700 mt-0.5 leading-relaxed">Gracias por reportarlo. El equipo del CETIS 52 lo revisará en las próximas 48 horas. Guarda tu folio — es la única forma de consultar el estado.</p>
                 </div>
               </div>
 
@@ -131,21 +148,36 @@ export default function TrackingPage() {
             </motion.div>
           )}
 
+          {/* Offline banner for mobile (full-width) */}
+          {realtimeStatus === "disconnected" && complaint && (
+            <div className="sm:hidden flex items-center gap-2 bg-red-50 border border-red-200 px-4 py-2.5 mb-4 text-xs text-red-600">
+              <WifiOff className="w-3.5 h-3.5 shrink-0" />
+              <span>Sin conexión en vivo — los datos podrían no estar actualizados.</span>
+            </div>
+          )}
+
           {complaint ? (
             <ComplaintTimeline complaint={complaint} onRefresh={fetchComplaint} />
           ) : (
-            <div className="text-center py-16">
-              <AlertCircle className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-600 mb-2 text-sm">No se encontró un reporte con el folio <span className="font-mono font-bold">{folio}</span></p>
-              <p className="text-sm text-gray-400 mb-6">Verifica que el folio sea correcto.</p>
+            <div className="border border-gray-200 p-8 text-center">
+              <AlertCircle className="w-10 h-10 text-gray-300 mx-auto mb-4" />
+              <p className="font-semibold text-gray-700 text-sm mb-1">No encontramos este folio</p>
+              <p className="font-mono text-xs text-gray-400 mb-4">{folio}</p>
+              <div className="text-left bg-gray-50 border border-gray-200 px-4 py-3 mb-6 space-y-1.5">
+                <p className="text-xs text-gray-600 font-medium">Posibles causas:</p>
+                <p className="text-xs text-gray-500">• Verifica que copiaste el folio completo y sin espacios</p>
+                <p className="text-xs text-gray-500">• El formato es <span className="font-mono">VE-2026-A1B2C3</span></p>
+                <p className="text-xs text-gray-500">• Si crees que es un error, contacta a la escuela</p>
+                <p className="text-xs text-gray-400 mt-2 italic">Si ya enviaste un reporte, este error no lo afecta — sigue registrado.</p>
+              </div>
               <div className="flex gap-3 justify-center">
                 <Link href="/seguimiento">
-                  <Button variant="outline" className="rounded-none border-crimson-200 text-crimson-600 hover:bg-crimson-50">
-                    Intentar de nuevo
+                  <Button variant="outline" className="rounded-none border-crimson-200 text-crimson-600 hover:bg-crimson-50 text-sm">
+                    Buscar otro folio
                   </Button>
                 </Link>
                 <Link href="/">
-                  <Button variant="outline" className="rounded-none border-gray-200 text-gray-600 hover:bg-gray-50">
+                  <Button variant="outline" className="rounded-none border-gray-200 text-gray-600 hover:bg-gray-50 text-sm">
                     Ir al inicio
                   </Button>
                 </Link>

@@ -23,7 +23,10 @@ export function Step1Role({ onSelect }: { onSelect: (role: Role) => void }) {
     <div>
       <span className="block w-8 h-0.5 bg-crimson-600 mb-5" />
       <h2 className="font-serif text-2xl font-bold text-gray-900 mb-1">¿Quién eres?</h2>
-      <p className="text-sm text-gray-500 mb-6">Selecciona tu rol en la comunidad escolar</p>
+      <p className="text-sm text-gray-500 mb-2">Selecciona tu rol en la comunidad escolar</p>
+      <p className="text-xs text-gray-400 mb-6 leading-relaxed">
+        Solo usamos esta información para adaptar las preguntas a tu situación. No cambia tu anonimato ni el nivel de atención que recibirá tu reporte.
+      </p>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {ROLES.map(({ value, label, desc, icon: Icon }, i) => {
           const isSelected = selected === value;

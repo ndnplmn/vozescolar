@@ -47,14 +47,19 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
 
   // Fetch critical+unattended complaints for notification panel
   useEffect(() => {
-    fetch("/api/admin/complaints")
-      .then(r => r.ok ? r.json() : { complaints: [] })
-      .then(d => {
-        const pending = (d.complaints as Complaint[]).filter(
-          c => c.urgency === "critical" && c.status === "recibida"
-        );
-        setAlerts(pending);
-      });
+    function fetchAlerts() {
+      fetch("/api/admin/complaints")
+        .then(r => r.ok ? r.json() : { complaints: [] })
+        .then(d => {
+          const pending = (d.complaints as Complaint[]).filter(
+            c => c.urgency === "critical" && c.status === "recibida"
+          );
+          setAlerts(pending);
+        });
+    }
+    fetchAlerts();
+    const interval = setInterval(fetchAlerts, 60_000);
+    return () => clearInterval(interval);
   }, [path]);
 
   // Close panel when clicking outside

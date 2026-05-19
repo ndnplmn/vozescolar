@@ -1,7 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { Home, Search } from "lucide-react";
+import { Home, Search, ShieldCheck } from "lucide-react";
 
 export default function NotFound() {
   return (
@@ -23,9 +23,13 @@ export default function NotFound() {
           <span className="block w-8 h-0.5 bg-crimson-600 mx-auto mb-6" />
           <p className="font-mono text-5xl font-bold text-crimson-600 mb-4">404</p>
           <h1 className="font-serif text-xl font-bold text-gray-900 mb-2">Página no encontrada</h1>
-          <p className="text-sm text-gray-500 mb-8">
+          <p className="text-sm text-gray-500 mb-4">
             La dirección que buscas no existe o fue removida.
           </p>
+          <div className="flex items-center justify-center gap-1.5 text-xs text-gray-400 mb-8">
+            <ShieldCheck className="w-3.5 h-3.5 text-crimson-300" />
+            Si ya enviaste un reporte, está seguro — este error no lo afecta.
+          </div>
           <div className="flex gap-3 justify-center">
             <Link href="/">
               <Button className="bg-crimson-600 hover:bg-crimson-700 rounded-none text-sm gap-2">

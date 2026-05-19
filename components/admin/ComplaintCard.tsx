@@ -1,7 +1,7 @@
 "use client";
 import { Complaint } from "@/lib/types";
 import { CATEGORY_LABELS, URGENCY_LABELS, ROLE_LABELS, STATUS_LABELS } from "@/lib/utils";
-import { EyeOff, Paperclip, Clock, ChevronRight } from "lucide-react";
+import { EyeOff, Paperclip, Clock, ChevronRight, AlertTriangle } from "lucide-react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 
@@ -27,6 +27,14 @@ const STATUS_BADGE: Record<string, string> = {
   cerrada:     "bg-gray-100 text-gray-400",
 };
 
+function overdueLevel(iso: string, status: string): "red" | "orange" | null {
+  if (["resuelta", "cerrada"].includes(status)) return null;
+  const hours = (Date.now() - new Date(iso).getTime()) / 3600000;
+  if (hours >= 48) return "red";
+  if (hours >= 24) return "orange";
+  return null;
+}
+
 function timeAgo(iso: string) {
   const diff = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
   if (diff < 60) return "ahora";
@@ -37,6 +45,7 @@ function timeAgo(iso: string) {
 }
 
 export function ComplaintCard({ complaint, index }: { complaint: Complaint; index: number }) {
+  const overdue = overdueLevel(complaint.createdAt, complaint.status);
   return (
     <motion.div
       initial={{ opacity: 0, y: 6 }}
@@ -44,7 +53,11 @@ export function ComplaintCard({ complaint, index }: { complaint: Complaint; inde
       transition={{ delay: index * 0.035, duration: 0.25 }}
     >
       <Link href={`/admin/queja/${complaint.id}`} className="block group">
-        <div className="bg-white border border-gray-200 hover:border-gray-300 hover:shadow-md transition-all duration-200 flex overflow-hidden">
+        <div className={`bg-white border hover:shadow-md transition-all duration-200 flex overflow-hidden ${
+          overdue === "red" ? "border-red-300 hover:border-red-400" :
+          overdue === "orange" ? "border-orange-300 hover:border-orange-400" :
+          "border-gray-200 hover:border-gray-300"
+        }`}>
 
           {/* Urgency accent bar */}
           <div className={`w-1 shrink-0 ${URGENCY_LEFT[complaint.urgency]}`} />
@@ -61,9 +74,21 @@ export function ComplaintCard({ complaint, index }: { complaint: Complaint; inde
                   {STATUS_LABELS[complaint.status]}
                 </span>
               </div>
-              <div className="flex items-center gap-1.5 text-[11px] text-gray-400 shrink-0">
-                <Clock className="w-3 h-3" />
-                {timeAgo(complaint.createdAt)}
+              <div className="flex items-center gap-2 shrink-0">
+                {overdue === "red" && (
+                  <span className="flex items-center gap-1 text-[10px] font-bold text-red-600 bg-red-50 border border-red-200 px-1.5 py-0.5">
+                    <AlertTriangle className="w-2.5 h-2.5" />+48h
+                  </span>
+                )}
+                {overdue === "orange" && (
+                  <span className="flex items-center gap-1 text-[10px] font-bold text-orange-600 bg-orange-50 border border-orange-200 px-1.5 py-0.5">
+                    <Clock className="w-2.5 h-2.5" />+24h
+                  </span>
+                )}
+                <div className="flex items-center gap-1 text-[11px] text-gray-400">
+                  <Clock className="w-3 h-3" />
+                  {timeAgo(complaint.createdAt)}
+                </div>
               </div>
             </div>
 

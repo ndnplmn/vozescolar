@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Role } from "@/lib/types";
-import { Send, ArrowRight, AlertTriangle, CheckCircle2, Loader2 } from "lucide-react";
+import { Send, ArrowRight, AlertTriangle, CheckCircle2, Loader2, Phone, HeartHandshake } from "lucide-react";
 
 interface Message { role: "assistant" | "user"; content: string; }
 
@@ -71,7 +71,8 @@ export function Step2Chat({
 
   useEffect(() => { setWordCount(totalWords); }, [totalWords]);
 
-  const canContinue = ready || wordCount >= 15;
+  const totalChars  = userMessages.reduce((acc, m) => acc + m.content.length, 0);
+  const canContinue = ready || (wordCount >= 15 && totalChars >= 80);
 
   // Fetch summary once canContinue becomes true
   useEffect(() => {
@@ -148,11 +149,10 @@ export function Step2Chat({
                 msgs[msgs.length - 1] = { role: "assistant", content: displayText };
                 return msgs;
               });
-            } else if (event.type === "fallback") {
-              fullText = event.text;
+            } else if (event.type === "error") {
               setMessages((prev) => {
                 const msgs = [...prev];
-                msgs[msgs.length - 1] = { role: "assistant", content: fullText };
+                msgs[msgs.length - 1] = { role: "assistant", content: "__error__" };
                 return msgs;
               });
               setReady(true);
@@ -172,13 +172,11 @@ export function Step2Chat({
       });
 
       if (fullText.includes("[READY]")) setReady(true);
-    } catch {
+    } catch (err) {
+      console.error("[Step2Chat] stream error:", err);
       setMessages((prev) => {
         const msgs = [...prev];
-        msgs[msgs.length - 1] = {
-          role: "assistant",
-          content: "¿Hay algo más que quieras agregar, o está bien así para continuar?",
-        };
+        msgs[msgs.length - 1] = { role: "assistant", content: "__error__" };
         return msgs;
       });
       setReady(true);
@@ -200,24 +198,53 @@ export function Step2Chat({
         Espacio seguro · Tu identidad está protegida
       </p>
 
-      {/* Crisis banner */}
+      {/* Crisis full-screen overlay */}
       <AnimatePresence>
         {crisis && (
           <motion.div
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="flex items-start gap-3 bg-amber-50 border border-amber-200 px-4 py-3 mb-4"
+            className="fixed inset-0 z-50 bg-white flex items-center justify-center p-6"
           >
-            <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-            <div>
-              <p className="text-xs font-semibold text-amber-800">Detectamos algo importante</p>
-              <p className="text-xs text-amber-700 mt-0.5">
-                Si estás en una situación de peligro o crisis, puedes llamar a la{" "}
-                <strong>Línea de la Vida: 800 911 2000</strong> (gratuita, 24/7).
-                Tu reporte también será atendido con máxima prioridad.
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.2 }}
+              className="w-full max-w-sm"
+            >
+              <div className="w-12 h-12 bg-red-50 flex items-center justify-center mb-6">
+                <HeartHandshake className="w-6 h-6 text-red-600" />
+              </div>
+              <span className="block w-8 h-0.5 bg-red-500 mb-5" />
+              <h2 className="font-serif text-2xl font-bold text-gray-900 mb-2">
+                Tu bienestar es lo primero
+              </h2>
+              <p className="text-sm text-gray-500 leading-relaxed mb-8">
+                Detectamos que puedes estar pasando por un momento muy difícil. Antes de continuar, queremos que sepas que no estás solo/a y que hay ayuda disponible ahora mismo.
               </p>
-            </div>
+
+              <a
+                href="tel:8009112000"
+                className="flex items-center justify-center gap-3 w-full h-13 bg-red-600 hover:bg-red-700 text-white font-semibold text-sm transition-colors px-6 py-4 mb-3"
+              >
+                <Phone className="w-4 h-4" />
+                Línea de la Vida — 800 911 2000
+              </a>
+              <p className="text-xs text-gray-400 text-center mb-8">Gratuita · Disponible las 24 horas · Confidencial</p>
+
+              <div className="border-t border-gray-100 pt-6">
+                <p className="text-xs text-gray-400 mb-4 text-center">
+                  También puedes continuar con tu reporte. Será atendido con máxima prioridad.
+                </p>
+                <button
+                  onClick={() => setCrisis(false)}
+                  className="w-full h-11 border border-crimson-200 text-crimson-600 hover:bg-crimson-50 text-sm font-medium transition-colors"
+                >
+                  Continuar con mi reporte
+                </button>
+              </div>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -239,29 +266,39 @@ export function Step2Chat({
                     VE
                   </span>
                 )}
-                <div
-                  className={`max-w-[82%] px-3.5 py-2.5 text-sm leading-relaxed ${
-                    msg.role === "user"
-                      ? "bg-crimson-600 text-white"
-                      : "bg-white border border-crimson-100 text-gray-700"
-                  }`}
-                >
-                  {msg.content}
-                  {streaming && isLastAssistant(i) && <BlinkingCursor />}
-                </div>
+                {msg.content === "__error__" ? (
+                  <div className="max-w-[82%] flex items-start gap-2 bg-amber-50 border border-amber-200 px-3 py-2.5 text-xs text-amber-700">
+                    <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                    <span>Hubo un problema de conexión. Puedes seguir escribiendo o continuar con el reporte.</span>
+                  </div>
+                ) : (
+                  <div
+                    className={`max-w-[82%] px-3.5 py-2.5 text-sm leading-relaxed ${
+                      msg.role === "user"
+                        ? "bg-crimson-600 text-white"
+                        : "bg-white border border-crimson-100 text-gray-700"
+                    }`}
+                  >
+                    {msg.content}
+                    {streaming && isLastAssistant(i) && <BlinkingCursor />}
+                  </div>
+                )}
               </motion.div>
             ))}
           </AnimatePresence>
           <div ref={bottomRef} />
         </div>
 
-        {/* Word count hint */}
+        {/* Progress hint */}
         {wordCount > 0 && !canContinue && (
-          <div className="px-4 py-1.5 border-t border-crimson-50 bg-white">
+          <div className="px-4 py-1.5 border-t border-crimson-50 bg-white flex items-center justify-between">
             <p className="text-[11px] text-gray-400">
               {wordCount < 8
                 ? "Cuéntanos un poco más para que podamos ayudarte mejor..."
-                : "Puedes continuar cuando quieras o añadir más detalles."}
+                : "Añade más detalles para poder continuar."}
+            </p>
+            <p className="text-[11px] text-gray-300 tabular-nums shrink-0 ml-3">
+              {totalChars} / 80
             </p>
           </div>
         )}

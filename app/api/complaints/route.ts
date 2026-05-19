@@ -9,6 +9,13 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { role, content, category, urgency, isAnonymous, evidenceBase64, evidenceName } = body;
 
+    if (!content || typeof content !== "string" || content.trim().length < 20) {
+      return NextResponse.json({ error: "El contenido del reporte es muy corto." }, { status: 400 });
+    }
+    if (content.length > 5000) {
+      return NextResponse.json({ error: "El contenido excede el límite permitido." }, { status: 400 });
+    }
+
     const id    = crypto.randomUUID();
     const folio = generateFolio();
     const hash  = await hashContent(content);

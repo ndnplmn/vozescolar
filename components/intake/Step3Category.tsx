@@ -24,7 +24,8 @@ export function Step3Category({
 }) {
   const [category, setCategory] = useState<Category | null>(null);
   const [urgency, setUrgency] = useState<Urgency | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading]   = useState(true);
+  const [aiError, setAiError]   = useState(false);
   const [aiPicked, setAiPicked] = useState<Category | null>(null);
 
   useEffect(() => {
@@ -35,10 +36,12 @@ export function Step3Category({
     })
       .then((r) => r.json())
       .then((data) => {
+        if (data.error || !data.category) { setAiError(true); return; }
         setCategory(data.category);
         setAiPicked(data.category);
         setUrgency(data.urgency);
       })
+      .catch(() => setAiError(true))
       .finally(() => setLoading(false));
   }, [content]);
 
@@ -66,6 +69,14 @@ export function Step3Category({
       ) : (
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
 
+          {/* AI error notice */}
+          {aiError && (
+            <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 px-3 py-2.5 mb-4">
+              <AlertTriangle className="w-3.5 h-3.5 text-amber-600 shrink-0 mt-0.5" />
+              <p className="text-xs text-amber-700">El asistente no pudo analizar tu reporte. Selecciona manualmente la categoría y urgencia.</p>
+            </div>
+          )}
+
           {/* AI selection indicator */}
           {aiPicked && !isModified && (
             <div className="flex items-center gap-2 mb-4 text-xs text-gray-500">
@@ -80,10 +91,30 @@ export function Step3Category({
             </div>
           )}
 
-          {/* Urgency badge */}
-          {urgency && (
+          {/* Urgency badge (AI-assigned) */}
+          {urgency && !aiError && (
             <div className={`inline-flex items-center gap-2 px-3 py-1.5 border text-xs font-semibold mb-4 ${URGENCY_COLORS[urgency]}`}>
               Urgencia detectada: {URGENCY_LABELS[urgency]}
+            </div>
+          )}
+
+          {/* Manual urgency selector (when AI failed) */}
+          {aiError && (
+            <div className="mb-4">
+              <p className="text-xs text-gray-500 mb-2 font-medium">¿Qué tan urgente es esta situación?</p>
+              <div className="flex flex-wrap gap-2">
+                {(["critical","high","medium","low"] as Urgency[]).map(u => (
+                  <button
+                    key={u}
+                    onClick={() => setUrgency(u)}
+                    className={`px-3 py-1.5 border text-xs font-semibold transition-all ${
+                      urgency === u ? URGENCY_COLORS[u] : "border-gray-200 text-gray-500 hover:border-gray-300"
+                    }`}
+                  >
+                    {URGENCY_LABELS[u]}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
 

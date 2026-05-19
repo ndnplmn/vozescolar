@@ -5,7 +5,7 @@ import { CategoryPieChart } from "@/components/admin/charts/CategoryPieChart";
 import { UrgencyDonut } from "@/components/admin/charts/UrgencyDonut";
 import { ComplaintsLineChart } from "@/components/admin/charts/ComplaintsLineChart";
 import { Complaint } from "@/lib/types";
-import { Sparkles, TrendingUp, AlertTriangle, CheckCircle2, Inbox, PercentIcon } from "lucide-react";
+import { Sparkles, TrendingUp, AlertTriangle, CheckCircle2, Inbox, PercentIcon, Clock, Timer } from "lucide-react";
 
 export default function AnalyticsPage() {
   const [complaints, setComplaints] = useState<Complaint[]>([]);
@@ -33,11 +33,30 @@ export default function AnalyticsPage() {
   const resolved = complaints.filter(c => c.status === "resuelta").length;
   const rate     = total ? Math.round((resolved / total) * 100) : 0;
 
+  const overdue7 = complaints.filter(c => {
+    if (["resuelta", "cerrada"].includes(c.status)) return false;
+    return (Date.now() - new Date(c.createdAt).getTime()) > 7 * 86400000;
+  }).length;
+
+  const resolvedWithTimeline = complaints.filter(
+    c => c.status === "resuelta" && c.timeline.some(t => t.status === "resuelta")
+  );
+  const avgHours = resolvedWithTimeline.length
+    ? Math.round(resolvedWithTimeline.reduce((sum, c) => {
+        const created = new Date(c.createdAt).getTime();
+        const resolved = new Date(c.timeline.find(t => t.status === "resuelta")!.timestamp).getTime();
+        return sum + (resolved - created) / 3600000;
+      }, 0) / resolvedWithTimeline.length)
+    : null;
+  const avgLabel = avgHours === null ? "—" : avgHours < 24 ? `${avgHours}h` : `${Math.round(avgHours / 24)}d`;
+
   const METRICS = [
-    { label: "Total reportes", value: total,                 icon: Inbox,         color: "text-gray-600",   bg: "bg-gray-100",   accent: "border-l-gray-400",   trend: null },
-    { label: "Críticos",       value: critical,              icon: AlertTriangle, color: "text-red-600",    bg: "bg-red-50",     accent: "border-l-red-500",    trend: critical > 0 ? "red" : null },
-    { label: "Resueltos",      value: resolved,              icon: CheckCircle2,  color: "text-green-600",  bg: "bg-green-50",   accent: "border-l-green-500",  trend: "green" },
-    { label: "% Resolución",   value: `${rate}%`,            icon: PercentIcon,   color: "text-purple-600", bg: "bg-purple-50",  accent: "border-l-purple-500", trend: null },
+    { label: "Total reportes",    value: total,     icon: Inbox,         color: "text-gray-600",   bg: "bg-gray-100",   accent: "border-l-gray-400"   },
+    { label: "Críticos",          value: critical,  icon: AlertTriangle, color: "text-red-600",    bg: "bg-red-50",     accent: "border-l-red-500"    },
+    { label: "% Resolución",      value: `${rate}%`,icon: PercentIcon,   color: "text-purple-600", bg: "bg-purple-50",  accent: "border-l-purple-500" },
+    { label: "Tiempo prom. cierre",value: avgLabel, icon: Timer,         color: "text-blue-600",   bg: "bg-blue-50",    accent: "border-l-blue-500"   },
+    { label: "Resueltos",         value: resolved,  icon: CheckCircle2,  color: "text-green-600",  bg: "bg-green-50",   accent: "border-l-green-500"  },
+    { label: "Pendientes >7 días", value: overdue7, icon: Clock,         color: overdue7 > 0 ? "text-orange-600" : "text-gray-400", bg: overdue7 > 0 ? "bg-orange-50" : "bg-gray-100", accent: overdue7 > 0 ? "border-l-orange-500" : "border-l-gray-300" },
   ];
 
   return (
@@ -45,7 +64,7 @@ export default function AnalyticsPage() {
       <div className="p-6 max-w-5xl mx-auto space-y-6">
 
         {/* Metric cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
           {METRICS.map(({ label, value, icon: Icon, color, bg, accent }) => (
             <div key={label} className={`bg-white border border-gray-200 border-l-4 ${accent} p-5`}>
               {loading ? (
