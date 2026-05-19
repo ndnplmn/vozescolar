@@ -5,7 +5,7 @@ import { Complaint, Status } from "@/lib/types";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { AIPanel } from "@/components/admin/AIPanel";
 import { CATEGORY_LABELS, URGENCY_LABELS, URGENCY_COLORS, STATUS_LABELS, ROLE_LABELS } from "@/lib/utils";
-import { ArrowLeft, CheckCircle2, ChevronRight, Paperclip, EyeOff, Calendar, Tag, Download, ZoomIn, X } from "lucide-react";
+import { ArrowLeft, CheckCircle2, ChevronRight, Paperclip, EyeOff, Calendar, Tag, Download, ZoomIn, X, XCircle, RefreshCw, AlertCircle } from "lucide-react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -29,13 +29,30 @@ const URGENCY_LEFT: Record<string, string> = {
   low:      "bg-green-400",
 };
 
+// Evidence URL expires after 1 hour; refresh a bit before
+const EVIDENCE_TTL_MS = 55 * 60 * 1000;
+
 export default function ComplaintDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const [complaint, setComplaint] = useState<Complaint | null>(null);
-  const [advancing, setAdvancing] = useState(false);
+  const [loading, setLoading]           = useState(true);
+  const [complaint, setComplaint]       = useState<Complaint | null>(null);
+  const [advancing, setAdvancing]       = useState(false);
+  const [closing, setClosing]           = useState(false);
   const [justAdvanced, setJustAdvanced] = useState(false);
-  const [evidenceUrl, setEvidenceUrl] = useState<string | null>(null);
+  const [evidenceUrl, setEvidenceUrl]   = useState<string | null>(null);
+  const [evidenceFetchedAt, setEvidenceFetchedAt] = useState<number | null>(null);
+  const [evidenceRefreshing, setEvidenceRefreshing] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
+
+  const fetchEvidence = useCallback(async (complaintId: string) => {
+    const res = await fetch(`/api/admin/complaints/${complaintId}/evidence`);
+    if (!res.ok) return;
+    const data = await res.json();
+    if (data.signedUrl) {
+      setEvidenceUrl(data.signedUrl);
+      setEvidenceFetchedAt(Date.now());
+    }
+  }, []);
 
   useEffect(() => {
     fetch(`/api/complaints/${id}`)
@@ -43,13 +60,11 @@ export default function ComplaintDetailPage() {
       .then(d => {
         const c = d.complaint ?? null;
         setComplaint(c);
-        if (c?.evidenceName) {
-          fetch(`/api/admin/complaints/${c.id}/evidence`)
-            .then(r => r.ok ? r.json() : null)
-            .then(d => d?.signedUrl && setEvidenceUrl(d.signedUrl));
-        }
-      });
-  }, [id]);
+        setLoading(false);
+        if (c?.evidenceName) fetchEvidence(c.id);
+      })
+      .catch(() => setLoading(false));
+  }, [id, fetchEvidence]);
 
   const advanceStatus = useCallback(async () => {
     if (!complaint) return;
@@ -70,22 +85,68 @@ export default function ComplaintDetailPage() {
     setAdvancing(false);
   }, [complaint]);
 
+  const closeCase = useCallback(async () => {
+    if (!complaint) return;
+    setClosing(true);
+    const res = await fetch(`/api/complaints/${complaint.id}/status`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status: "cerrada", message: "Caso cerrado sin acción." }),
+    });
+    if (res.ok) {
+      setComplaint(prev => prev ? { ...prev, status: "cerrada" } : null);
+      setJustAdvanced(true);
+      setTimeout(() => setJustAdvanced(false), 3000);
+    }
+    setClosing(false);
+  }, [complaint]);
+
+  const refreshEvidence = useCallback(async () => {
+    if (!complaint) return;
+    setEvidenceRefreshing(true);
+    await fetchEvidence(complaint.id);
+    setEvidenceRefreshing(false);
+  }, [complaint, fetchEvidence]);
+
+  // Loading skeleton
+  if (loading) return (
+    <AdminLayout>
+      <div className="p-6 max-w-5xl mx-auto space-y-4">
+        <div className="h-8 w-32 bg-gray-200 animate-pulse" />
+        <div className="h-48 bg-gray-200 animate-pulse" />
+        <div className="h-32 bg-gray-200 animate-pulse" />
+      </div>
+    </AdminLayout>
+  );
+
+  // Not found
   if (!complaint) return (
     <AdminLayout>
       <div className="p-6 max-w-5xl mx-auto">
-        <div className="space-y-4">
-          <div className="h-8 w-32 bg-gray-200 animate-pulse" />
-          <div className="h-48 bg-gray-200 animate-pulse" />
-          <div className="h-32 bg-gray-200 animate-pulse" />
+        <Link
+          href="/admin"
+          className="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-crimson-600 transition-colors mb-6 group"
+        >
+          <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
+          Volver a la bandeja
+        </Link>
+        <div className="bg-white border border-gray-200 p-10 flex flex-col items-center text-center">
+          <AlertCircle className="w-10 h-10 text-gray-300 mb-4" />
+          <p className="text-gray-700 font-semibold mb-1">Reporte no encontrado</p>
+          <p className="text-sm text-gray-400">El expediente solicitado no existe o fue eliminado.</p>
+          <Link href="/admin" className="mt-5 text-sm text-crimson-600 hover:underline">
+            Ir a la bandeja
+          </Link>
         </div>
       </div>
     </AdminLayout>
   );
 
   const currentIdx = STATUS_FLOW.indexOf(complaint.status as Status);
-  const isResolved = complaint.status === "resuelta" || complaint.status === "cerrada";
-  const nextLabel = STATUS_NEXT_LABEL[complaint.status as Status];
+  const isTerminal = complaint.status === "resuelta" || complaint.status === "cerrada";
+  const nextLabel  = STATUS_NEXT_LABEL[complaint.status as Status];
   const statusStyle = STATUS_COLORS[complaint.status] ?? STATUS_COLORS.cerrada;
+  const evidenceExpired = evidenceFetchedAt !== null && Date.now() - evidenceFetchedAt > EVIDENCE_TTL_MS;
 
   return (
     <AdminLayout>
@@ -108,10 +169,9 @@ export default function ComplaintDetailPage() {
             {/* Complaint card */}
             <div className="bg-white border border-gray-200 overflow-hidden">
               <div className="flex">
-                {/* Urgency bar */}
                 <div className={`w-1.5 shrink-0 ${URGENCY_LEFT[complaint.urgency]}`} />
                 <div className="flex-1 p-6">
-                  {/* Header row */}
+                  {/* Header */}
                   <div className="flex items-start justify-between gap-4 mb-5">
                     <div>
                       <p className="font-mono text-xs text-gray-400 mb-1.5">{complaint.folio}</p>
@@ -155,10 +215,27 @@ export default function ComplaintDetailPage() {
                   {/* Evidence viewer */}
                   {complaint.evidenceName && (
                     <div className="mb-4">
-                      <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-2 flex items-center gap-1.5">
-                        <Paperclip className="w-3 h-3" />
-                        Evidencia adjunta
-                      </p>
+                      <div className="flex items-center justify-between mb-2">
+                        <p className="text-xs font-bold text-gray-400 uppercase tracking-wide flex items-center gap-1.5">
+                          <Paperclip className="w-3 h-3" />
+                          Evidencia adjunta
+                        </p>
+                        {evidenceUrl && (
+                          <button
+                            onClick={refreshEvidence}
+                            disabled={evidenceRefreshing}
+                            title="Renovar enlace de evidencia"
+                            className={`flex items-center gap-1 text-[11px] transition-colors disabled:opacity-50 ${
+                              evidenceExpired
+                                ? "text-amber-600 hover:text-amber-700 font-medium"
+                                : "text-gray-400 hover:text-gray-600"
+                            }`}
+                          >
+                            <RefreshCw className={`w-3 h-3 ${evidenceRefreshing ? "animate-spin" : ""}`} />
+                            {evidenceExpired ? "Enlace expirado — renovar" : "Renovar enlace"}
+                          </button>
+                        )}
+                      </div>
                       {!evidenceUrl ? (
                         <div className="h-10 bg-gray-100 animate-pulse rounded" />
                       ) : complaint.evidenceName.toLowerCase().endsWith(".pdf") ? (
@@ -209,7 +286,7 @@ export default function ComplaintDetailPage() {
               {/* Stepper */}
               <div className="flex items-start gap-0 mb-6 overflow-x-auto pb-1">
                 {STATUS_FLOW.map((s, i) => {
-                  const done = i <= currentIdx;
+                  const done    = i <= currentIdx;
                   const current = i === currentIdx;
                   return (
                     <div key={s} className="flex items-center shrink-0">
@@ -237,24 +314,45 @@ export default function ComplaintDetailPage() {
                 })}
               </div>
 
-              {/* Advance button */}
-              {!isResolved && nextLabel && (
-                <div className="flex items-center gap-3 pt-2 border-t border-gray-100">
+              {/* Actions row */}
+              {!isTerminal && (
+                <div className="flex items-center gap-3 pt-2 border-t border-gray-100 flex-wrap">
+                  {nextLabel && (
+                    <button
+                      onClick={advanceStatus}
+                      disabled={advancing || closing}
+                      className="flex items-center gap-2 bg-crimson-600 hover:bg-crimson-700 disabled:opacity-60 text-white text-sm font-semibold px-5 py-2.5 transition-colors shadow-sm"
+                    >
+                      {advancing ? (
+                        <>
+                          <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                          </svg>
+                          Actualizando...
+                        </>
+                      ) : (
+                        <>{nextLabel}<ChevronRight className="w-4 h-4" /></>
+                      )}
+                    </button>
+                  )}
+
+                  {/* Close without action */}
                   <button
-                    onClick={advanceStatus}
-                    disabled={advancing}
-                    className="flex items-center gap-2 bg-crimson-600 hover:bg-crimson-700 disabled:opacity-60 text-white text-sm font-semibold px-5 py-2.5 transition-colors shadow-sm"
+                    onClick={closeCase}
+                    disabled={advancing || closing}
+                    className="flex items-center gap-2 text-gray-400 hover:text-gray-600 disabled:opacity-50 text-sm font-medium px-3 py-2.5 border border-gray-200 hover:border-gray-300 bg-white transition-colors"
                   >
-                    {advancing ? (
+                    {closing ? (
                       <>
-                        <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                        <svg className="animate-spin w-3.5 h-3.5" fill="none" viewBox="0 0 24 24">
                           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
                           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
                         </svg>
-                        Actualizando...
+                        Cerrando...
                       </>
                     ) : (
-                      <>{nextLabel}<ChevronRight className="w-4 h-4" /></>
+                      <><XCircle className="w-3.5 h-3.5" />Cerrar sin acción</>
                     )}
                   </button>
 
@@ -274,10 +372,14 @@ export default function ComplaintDetailPage() {
                 </div>
               )}
 
-              {isResolved && (
-                <div className="flex items-center gap-2 text-green-600 text-sm font-semibold pt-2 border-t border-gray-100">
-                  <CheckCircle2 className="w-4 h-4" />
-                  Caso {STATUS_LABELS[complaint.status].toLowerCase()}
+              {isTerminal && (
+                <div className={`flex items-center gap-2 text-sm font-semibold pt-2 border-t border-gray-100 ${
+                  complaint.status === "cerrada" ? "text-gray-400" : "text-green-600"
+                }`}>
+                  {complaint.status === "cerrada"
+                    ? <><XCircle className="w-4 h-4" />Caso cerrado sin acción</>
+                    : <><CheckCircle2 className="w-4 h-4" />Caso {STATUS_LABELS[complaint.status].toLowerCase()}</>
+                  }
                 </div>
               )}
             </div>
