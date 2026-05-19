@@ -5,19 +5,21 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Category, Urgency, Role } from "@/lib/types";
 import { CATEGORY_LABELS, URGENCY_LABELS, URGENCY_COLORS, ROLE_LABELS } from "@/lib/utils";
-import { Shield, ChevronDown, Lock, Loader2, Send } from "lucide-react";
+import { Shield, ChevronDown, Lock, Loader2, Send, Paperclip } from "lucide-react";
 
 export function Step5Confirm({
   role,
   content,
   category,
   urgency,
+  evidenceName,
   onSubmit,
 }: {
   role: Role;
   content: string;
   category: Category;
   urgency: Urgency;
+  evidenceName?: string;
   onSubmit: (isAnonymous: boolean) => void;
 }) {
   const [isAnonymous, setIsAnonymous] = useState(true);
@@ -69,6 +71,17 @@ export function Step5Confirm({
               </button>
             )}
           </div>
+        </div>
+        <div className="border-t border-crimson-100 pt-3 flex justify-between text-sm items-center">
+          <span className="text-gray-500">Evidencia</span>
+          {evidenceName ? (
+            <span className="inline-flex items-center gap-1.5 text-xs text-crimson-700 font-medium">
+              <Paperclip className="w-3 h-3" />
+              {evidenceName}
+            </span>
+          ) : (
+            <span className="text-xs text-gray-400 italic">No adjuntada</span>
+          )}
         </div>
       </div>
 

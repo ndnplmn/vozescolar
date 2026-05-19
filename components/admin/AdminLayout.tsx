@@ -2,9 +2,11 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, BarChart3, Settings, LogOut, BookOpen, Menu, Bell, ArrowUpLeft } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { LayoutDashboard, BarChart3, Settings, LogOut, BookOpen, Menu, Bell, ArrowUpLeft, AlertTriangle, ChevronRight, X } from "lucide-react";
 import { AdminAuthGuard } from "./AdminAuthGuard";
-import { useState } from "react";
+import { CATEGORY_LABELS, URGENCY_LABELS } from "@/lib/utils";
+import { Complaint } from "@/lib/types";
 
 const NAV = [
   { href: "/admin",               label: "Bandeja",       icon: LayoutDashboard, desc: "Reportes recibidos" },
@@ -26,12 +28,45 @@ async function signOut() {
   window.location.href = "/";
 }
 
+function timeAgo(iso: string): string {
+  const diff = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
+  if (diff < 3600) return `hace ${Math.floor(diff / 60)} min`;
+  if (diff < 86400) return `hace ${Math.floor(diff / 3600)} h`;
+  return `hace ${Math.floor(diff / 86400)} d`;
+}
+
 export function AdminLayout({ children }: { children: React.ReactNode }) {
   const path = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [notifOpen, setNotifOpen]   = useState(false);
+  const [alerts, setAlerts]         = useState<Complaint[]>([]);
+  const notifRef = useRef<HTMLDivElement>(null);
 
-  const title = PAGE_TITLES[path] ?? "Panel de Administración";
+  const title   = PAGE_TITLES[path] ?? "Panel de Administración";
   const isQueja = path.startsWith("/admin/queja/");
+
+  // Fetch critical+unattended complaints for notification panel
+  useEffect(() => {
+    fetch("/api/admin/complaints")
+      .then(r => r.ok ? r.json() : { complaints: [] })
+      .then(d => {
+        const pending = (d.complaints as Complaint[]).filter(
+          c => c.urgency === "critical" && c.status === "recibida"
+        );
+        setAlerts(pending);
+      });
+  }, [path]);
+
+  // Close panel when clicking outside
+  useEffect(() => {
+    function onClickOutside(e: MouseEvent) {
+      if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
+        setNotifOpen(false);
+      }
+    }
+    if (notifOpen) document.addEventListener("mousedown", onClickOutside);
+    return () => document.removeEventListener("mousedown", onClickOutside);
+  }, [notifOpen]);
 
   return (
     <AdminAuthGuard>
@@ -137,10 +172,83 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
                 )}
               </div>
             </div>
+
             <div className="flex items-center gap-2">
-              <button className="p-2 text-gray-400 hover:text-gray-700 rounded-lg hover:bg-gray-100 transition-colors relative">
-                <Bell className="w-4 h-4" />
-              </button>
+              {/* Notification bell */}
+              <div className="relative" ref={notifRef}>
+                <button
+                  onClick={() => setNotifOpen(v => !v)}
+                  className="p-2 text-gray-400 hover:text-gray-700 rounded-lg hover:bg-gray-100 transition-colors relative"
+                >
+                  <Bell className="w-4 h-4" />
+                  {alerts.length > 0 && (
+                    <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
+                  )}
+                </button>
+
+                {notifOpen && (
+                  <div className="absolute right-0 top-full mt-2 w-80 bg-white border border-gray-200 shadow-lg z-50">
+                    {/* Header */}
+                    <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+                      <div className="flex items-center gap-2">
+                        <Bell className="w-3.5 h-3.5 text-gray-500" />
+                        <p className="text-xs font-bold text-gray-700 uppercase tracking-wide">Alertas críticas</p>
+                      </div>
+                      <button onClick={() => setNotifOpen(false)} className="text-gray-400 hover:text-gray-600 transition-colors">
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+
+                    {/* List */}
+                    {alerts.length === 0 ? (
+                      <div className="px-4 py-6 text-center">
+                        <p className="text-xs text-gray-400">Sin reportes críticos pendientes</p>
+                      </div>
+                    ) : (
+                      <div className="divide-y divide-gray-100 max-h-72 overflow-y-auto">
+                        {alerts.map(c => (
+                          <Link
+                            key={c.id}
+                            href={`/admin/queja/${c.id}`}
+                            onClick={() => setNotifOpen(false)}
+                            className="flex items-start gap-3 px-4 py-3 hover:bg-gray-50 transition-colors group"
+                          >
+                            <div className="w-7 h-7 bg-red-50 flex items-center justify-center shrink-0 mt-0.5">
+                              <AlertTriangle className="w-3.5 h-3.5 text-red-500" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs font-semibold text-gray-800 truncate">
+                                {CATEGORY_LABELS[c.category]}
+                              </p>
+                              <p className="text-[11px] text-gray-500 mt-0.5 truncate">{c.content}</p>
+                              <div className="flex items-center gap-2 mt-1">
+                                <span className="text-[10px] font-bold text-red-600 bg-red-50 px-1.5 py-0.5">
+                                  {URGENCY_LABELS[c.urgency]}
+                                </span>
+                                <span className="text-[10px] text-gray-400">{timeAgo(c.createdAt)}</span>
+                                <span className="text-[10px] font-mono text-gray-400">{c.folio}</span>
+                              </div>
+                            </div>
+                            <ChevronRight className="w-3.5 h-3.5 text-gray-300 group-hover:text-crimson-500 transition-colors shrink-0 mt-1" />
+                          </Link>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Footer */}
+                    <div className="px-4 py-2.5 border-t border-gray-100 bg-gray-50">
+                      <Link
+                        href="/admin"
+                        onClick={() => setNotifOpen(false)}
+                        className="text-xs text-crimson-600 hover:text-crimson-700 font-medium transition-colors"
+                      >
+                        Ver bandeja completa →
+                      </Link>
+                    </div>
+                  </div>
+                )}
+              </div>
+
               <div className="w-8 h-8 bg-crimson-600 rounded-full flex items-center justify-center">
                 <span className="text-white text-xs font-bold">A</span>
               </div>

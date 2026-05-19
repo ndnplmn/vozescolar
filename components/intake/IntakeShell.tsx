@@ -8,10 +8,9 @@ import { Step3Category } from "./Step3Category";
 import { Step4Evidence } from "./Step4Evidence";
 import { Step5Confirm } from "./Step5Confirm";
 import { Role, Category, Urgency } from "@/lib/types";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 
 export function IntakeShell() {
@@ -19,8 +18,9 @@ export function IntakeShell() {
   const [step, setStep] = useState(0);
   const [submitted, setSubmitted] = useState(false);
   const [submitError, setSubmitError] = useState(false);
+  const [confirmLeave, setConfirmLeave] = useState(false);
 
-  // Warn before leaving mid-flow
+  // Warn before browser navigation mid-flow
   useEffect(() => {
     if (step === 0 || submitted) return;
     const handler = (e: BeforeUnloadEvent) => {
@@ -48,6 +48,13 @@ export function IntakeShell() {
     if (step === 0) return;
     setDir(-1);
     setStep((s) => s - 1);
+  }
+
+  function handleLogoClick(e: React.MouseEvent) {
+    if (step > 0 && !submitted) {
+      e.preventDefault();
+      setConfirmLeave(true);
+    }
   }
 
   async function handleSubmit(isAnonymous: boolean) {
@@ -97,13 +104,13 @@ export function IntakeShell() {
     <div className="min-h-screen bg-white flex flex-col">
       <header className="border-b border-crimson-200 sticky top-0 bg-white z-30">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-3.5">
+          <a href="/" onClick={handleLogoClick} className="flex items-center gap-3.5 cursor-pointer">
             <Image src="/cetis52-logo.svg" alt="CETIS 52" width={36} height={36} />
             <div>
               <p className="text-[10px] font-bold tracking-[0.18em] text-crimson-600 uppercase leading-none mb-0.5">CETIS 52</p>
               <p className="text-xs font-medium text-gray-700 leading-none">Hermenegildo Galeana</p>
             </div>
-          </Link>
+          </a>
           <span className="text-xs text-gray-400 hidden sm:block font-medium tracking-wide">Canal confidencial · Buzón oficial</span>
         </div>
       </header>
@@ -164,7 +171,16 @@ export function IntakeShell() {
                   {step === 1 && <Step2Chat userRole={role} onComplete={(c) => { setContent(c); advance(2); }} />}
                   {step === 2 && <Step3Category content={content} onComplete={(cat, urg) => { setCategory(cat); setUrgency(urg); advance(3); }} />}
                   {step === 3 && <Step4Evidence onComplete={(b64, name) => { setEvidenceBase64(b64); setEvidenceName(name); advance(4); }} />}
-                  {step === 4 && <Step5Confirm role={role} content={content} category={category} urgency={urgency} onSubmit={handleSubmit} />}
+                  {step === 4 && (
+                    <Step5Confirm
+                      role={role}
+                      content={content}
+                      category={category}
+                      urgency={urgency}
+                      evidenceName={evidenceName}
+                      onSubmit={handleSubmit}
+                    />
+                  )}
                 </motion.div>
               </AnimatePresence>
             </div>
@@ -182,6 +198,57 @@ export function IntakeShell() {
           <span className="text-crimson-600 font-medium">VozEscolar</span>
         </div>
       </footer>
+
+      {/* Leave confirmation modal */}
+      <AnimatePresence>
+        {confirmLeave && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4"
+            onClick={() => setConfirmLeave(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              transition={{ duration: 0.15 }}
+              className="bg-white w-full max-w-sm p-6 shadow-xl"
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 bg-red-50 flex items-center justify-center shrink-0">
+                    <AlertTriangle className="w-5 h-5 text-red-500" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-gray-900 text-sm">¿Salir del formulario?</p>
+                    <p className="text-xs text-gray-500 mt-0.5">Tu progreso se perderá.</p>
+                  </div>
+                </div>
+                <button onClick={() => setConfirmLeave(false)} className="text-gray-400 hover:text-gray-600 transition-colors">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setConfirmLeave(false)}
+                  className="flex-1 h-10 border border-gray-200 text-sm text-gray-600 hover:bg-gray-50 transition-colors font-medium"
+                >
+                  Continuar reporte
+                </button>
+                <a
+                  href="/"
+                  className="flex-1 h-10 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold flex items-center justify-center transition-colors"
+                >
+                  Salir
+                </a>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

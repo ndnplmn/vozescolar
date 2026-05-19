@@ -67,7 +67,7 @@ export function ComplaintTimeline({ complaint, onRefresh }: Props) {
           <button
             onClick={handleRefresh}
             disabled={refreshing}
-            className="flex items-center gap-1.5 text-[11px] text-crimson-600 hover:text-crimson-700 font-medium transition-colors disabled:opacity-50"
+            className="flex items-center gap-1.5 text-[11px] text-crimson-600 hover:text-crimson-700 font-medium transition-colors disabled:opacity-50 border border-crimson-200 hover:border-crimson-300 bg-white hover:bg-crimson-50 px-2.5 py-1"
           >
             <RotateCw className={`w-3 h-3 ${refreshing ? "animate-spin" : ""}`} />
             {refreshing ? "Actualizando..." : "Actualizar"}
