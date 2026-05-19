@@ -2,60 +2,159 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, BarChart3, Settings, LogOut, BookOpen } from "lucide-react";
+import { LayoutDashboard, BarChart3, Settings, LogOut, BookOpen, Menu, Bell } from "lucide-react";
 import { AdminAuthGuard } from "./AdminAuthGuard";
+import { useState } from "react";
 
 const NAV = [
-  { href: "/admin",               label: "Bandeja",      icon: LayoutDashboard },
-  { href: "/admin/analiticas",    label: "Analíticas",   icon: BarChart3 },
-  { href: "/admin/configuracion", label: "Configuración", icon: Settings },
-  { href: "/admin/ayuda",         label: "Guía de uso",  icon: BookOpen },
+  { href: "/admin",               label: "Bandeja",       icon: LayoutDashboard, desc: "Reportes recibidos" },
+  { href: "/admin/analiticas",    label: "Analíticas",    icon: BarChart3,        desc: "Estadísticas y tendencias" },
+  { href: "/admin/configuracion", label: "Configuración", icon: Settings,         desc: "Ajustes del sistema" },
+  { href: "/admin/ayuda",         label: "Guía de uso",   icon: BookOpen,         desc: "Manual del administrador" },
 ];
 
-async function handleSignOut() {
+const PAGE_TITLES: Record<string, string> = {
+  "/admin":               "Bandeja de Reportes",
+  "/admin/analiticas":    "Analíticas",
+  "/admin/configuracion": "Configuración",
+  "/admin/ayuda":         "Guía de uso",
+};
+
+async function signOut() {
   await fetch("/api/admin/auth", { method: "DELETE" });
   sessionStorage.removeItem("vozescolar_admin_auth");
-  window.location.reload();
+  window.location.href = "/admin";
 }
 
 export function AdminLayout({ children }: { children: React.ReactNode }) {
   const path = usePathname();
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  const title = PAGE_TITLES[path] ?? "Panel de Administración";
+  const isQueja = path.startsWith("/admin/queja/");
+
   return (
     <AdminAuthGuard>
-      <div className="min-h-screen bg-white flex">
-        <aside className="w-56 bg-crimson-600 text-white flex flex-col py-6 px-4 hidden md:flex shrink-0">
-          <div className="flex items-center gap-3 mb-10 px-2">
-            <Image src="/cetis52-logo.svg" alt="CETIS 52" width={32} height={32} className="rounded opacity-90" />
-            <div>
-              <p className="text-[10px] font-semibold tracking-widest text-white/70 uppercase">CETIS 52</p>
-              <p className="text-xs font-bold text-white leading-tight">VozEscolar</p>
+      <div className="min-h-screen bg-[#f8f9fb] flex">
+
+        {/* ── Sidebar ── */}
+        <aside className={`
+          fixed inset-y-0 left-0 z-40 w-64 bg-[#0f1117] flex flex-col
+          transition-transform duration-300 ease-in-out
+          ${mobileOpen ? "translate-x-0" : "-translate-x-full"}
+          md:relative md:translate-x-0 md:flex shrink-0
+        `}>
+
+          {/* Logo */}
+          <div className="px-6 py-6 border-b border-white/[0.06]">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 bg-crimson-600 flex items-center justify-center shrink-0">
+                <Image src="/cetis52-logo.svg" alt="CETIS 52" width={22} height={22} className="brightness-0 invert" />
+              </div>
+              <div>
+                <p className="text-[10px] font-bold tracking-[0.2em] text-white/40 uppercase leading-none mb-1">CETIS 52</p>
+                <p className="text-sm font-bold text-white leading-none">VozEscolar</p>
+              </div>
             </div>
           </div>
-          <nav className="space-y-0.5 flex-1">
-            {NAV.map(({ href, label, icon: Icon }) => (
-              <Link
-                key={href}
-                href={href}
-                className={`flex items-center gap-3 px-3 py-2.5 text-sm font-medium transition-colors ${
-                  path === href
-                    ? "bg-white/15 text-white"
-                    : "text-white/70 hover:bg-white/10 hover:text-white"
-                }`}
-              >
-                <Icon className="w-4 h-4" />
-                {label}
-              </Link>
-            ))}
+
+          {/* Nav */}
+          <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
+            <p className="text-[10px] font-bold tracking-[0.15em] text-white/25 uppercase px-3 mb-3">Navegación</p>
+            {NAV.map(({ href, label, icon: Icon, desc }) => {
+              const active = path === href;
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  onClick={() => setMobileOpen(false)}
+                  className={`
+                    flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all group
+                    ${active
+                      ? "bg-crimson-600 text-white shadow-lg shadow-crimson-900/30"
+                      : "text-white/50 hover:bg-white/[0.06] hover:text-white/90"
+                    }
+                  `}
+                >
+                  <Icon className="w-4 h-4 shrink-0" />
+                  <div className="min-w-0">
+                    <p className="leading-none">{label}</p>
+                    {!active && <p className="text-[10px] text-white/30 mt-0.5 leading-none truncate">{desc}</p>}
+                  </div>
+                </Link>
+              );
+            })}
           </nav>
-          <button
-            onClick={handleSignOut}
-            className="flex items-center gap-2 px-3 py-2 text-xs text-white/50 hover:text-white/80 transition-colors mt-2"
-          >
-            <LogOut className="w-3.5 h-3.5" />
-            Cerrar sesión
-          </button>
+
+          {/* Bottom */}
+          <div className="px-3 py-4 border-t border-white/[0.06] space-y-1">
+            <div className="flex items-center gap-3 px-3 py-2">
+              <div className="w-7 h-7 bg-crimson-600/20 rounded-full flex items-center justify-center shrink-0">
+                <span className="text-crimson-400 text-xs font-bold">A</span>
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-semibold text-white/80 leading-none">Administrador</p>
+                <p className="text-[10px] text-white/30 mt-0.5 leading-none">CETIS 52</p>
+              </div>
+            </div>
+            <button
+              onClick={signOut}
+              className="w-full flex items-center gap-3 px-3 py-2 text-sm text-white/40 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-all"
+            >
+              <LogOut className="w-4 h-4 shrink-0" />
+              Cerrar sesión
+            </button>
+          </div>
         </aside>
-        <main className="flex-1 overflow-auto bg-gray-50">{children}</main>
+
+        {/* Mobile overlay */}
+        {mobileOpen && (
+          <div
+            className="fixed inset-0 bg-black/50 z-30 md:hidden"
+            onClick={() => setMobileOpen(false)}
+          />
+        )}
+
+        {/* ── Main area ── */}
+        <div className="flex-1 flex flex-col min-w-0">
+
+          {/* Topbar */}
+          <header className="sticky top-0 z-20 bg-white border-b border-gray-200/80 px-6 py-0 h-14 flex items-center justify-between shrink-0 shadow-sm">
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => setMobileOpen(true)}
+                className="md:hidden p-1.5 text-gray-500 hover:text-gray-800 rounded transition-colors"
+              >
+                <Menu className="w-5 h-5" />
+              </button>
+              <div className="flex items-center gap-2 text-sm">
+                {isQueja ? (
+                  <>
+                    <Link href="/admin" className="text-gray-400 hover:text-crimson-600 transition-colors">Bandeja</Link>
+                    <span className="text-gray-300">/</span>
+                    <span className="text-gray-700 font-medium">Expediente</span>
+                  </>
+                ) : (
+                  <h1 className="font-semibold text-gray-900">{title}</h1>
+                )}
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <button className="p-2 text-gray-400 hover:text-gray-700 rounded-lg hover:bg-gray-100 transition-colors relative">
+                <Bell className="w-4 h-4" />
+              </button>
+              <div className="w-8 h-8 bg-crimson-600 rounded-full flex items-center justify-center">
+                <span className="text-white text-xs font-bold">A</span>
+              </div>
+            </div>
+          </header>
+
+          {/* Page content */}
+          <main className="flex-1 overflow-auto">
+            {children}
+          </main>
+        </div>
+
       </div>
     </AdminAuthGuard>
   );
