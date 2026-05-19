@@ -2,7 +2,7 @@ import { supabase } from "./supabase";
 import { Complaint, Status } from "./types";
 
 // ── Types matching Supabase rows ──────────────────────────────
-interface DBComplaint {
+export interface DBComplaint {
   id: string;
   folio: string;
   role: string;
@@ -30,7 +30,7 @@ interface DBTimeline {
 }
 
 // ── Converters ────────────────────────────────────────────────
-function toComplaint(row: DBComplaint): Complaint {
+export function toComplaint(row: DBComplaint): Complaint {
   return {
     id:             row.id,
     folio:          row.folio,

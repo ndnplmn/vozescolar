@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase";
+import { toComplaint, DBComplaint } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
@@ -13,5 +14,7 @@ export async function GET() {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  return NextResponse.json({ complaints: data ?? [] });
+  return NextResponse.json({
+    complaints: (data ?? []).map((row) => toComplaint(row as DBComplaint)),
+  });
 }

@@ -1,11 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { createServerClient } from "@/lib/supabase";
+
+export const dynamic = "force-dynamic";
 
 export async function GET(
   _req: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  const { data: row } = await supabase
+  const db = createServerClient();
+
+  const { data: row } = await db
     .from("complaints")
     .select("evidence_url, evidence_name")
     .eq("id", params.id)
@@ -15,7 +19,7 @@ export async function GET(
     return NextResponse.json({ error: "No evidence found" }, { status: 404 });
   }
 
-  const { data: signed } = await supabase.storage
+  const { data: signed } = await db.storage
     .from("evidence")
     .createSignedUrl(row.evidence_url, 3600);
 

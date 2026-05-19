@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase";
+import { toComplaint, DBComplaint } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
@@ -19,5 +20,5 @@ export async function GET(
     return NextResponse.json({ error: "No encontrado" }, { status: 404 });
   }
 
-  return NextResponse.json({ complaint: data });
+  return NextResponse.json({ complaint: toComplaint(data as DBComplaint) });
 }
