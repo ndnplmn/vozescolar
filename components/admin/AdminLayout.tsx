@@ -23,7 +23,7 @@ const PAGE_TITLES: Record<string, string> = {
 async function signOut() {
   await fetch("/api/admin/auth", { method: "DELETE" });
   sessionStorage.removeItem("vozescolar_admin_auth");
-  window.location.href = "/admin";
+  window.location.href = "/";
 }
 
 export function AdminLayout({ children }: { children: React.ReactNode }) {

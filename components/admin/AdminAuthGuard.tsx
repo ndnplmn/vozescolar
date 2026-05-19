@@ -2,8 +2,9 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Input } from "@/components/ui/input";
-import { Lock, Eye, EyeOff, ShieldAlert } from "lucide-react";
+import { Lock, Eye, EyeOff, ShieldAlert, ArrowLeft } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 
 const SESSION_KEY = "vozescolar_admin_auth";
 
@@ -109,6 +110,16 @@ export function AdminAuthGuard({ children }: { children: React.ReactNode }) {
           <p className="text-[11px] text-gray-400 text-center mt-6">
             Solo personal autorizado del CETIS 52
           </p>
+        </div>
+
+        <div className="text-center mt-5">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-1.5 text-xs text-gray-400 hover:text-crimson-600 transition-colors"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            Volver al sitio público
+          </Link>
         </div>
       </motion.div>
     </div>
