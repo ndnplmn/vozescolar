@@ -38,5 +38,6 @@ export interface Complaint {
   adminResponse?: string;
   evidenceBase64?: string;
   evidenceName?: string;
+  evidenceUrl?: string;
   sentimentScore?: number;
 }

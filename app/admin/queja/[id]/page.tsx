@@ -5,7 +5,7 @@ import { Complaint, Status } from "@/lib/types";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { AIPanel } from "@/components/admin/AIPanel";
 import { CATEGORY_LABELS, URGENCY_LABELS, URGENCY_COLORS, STATUS_LABELS, ROLE_LABELS } from "@/lib/utils";
-import { ArrowLeft, CheckCircle2, ChevronRight, Paperclip, EyeOff, Calendar, Tag } from "lucide-react";
+import { ArrowLeft, CheckCircle2, ChevronRight, Paperclip, EyeOff, Calendar, Tag, Download, ZoomIn, X } from "lucide-react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -34,11 +34,21 @@ export default function ComplaintDetailPage() {
   const [complaint, setComplaint] = useState<Complaint | null>(null);
   const [advancing, setAdvancing] = useState(false);
   const [justAdvanced, setJustAdvanced] = useState(false);
+  const [evidenceUrl, setEvidenceUrl] = useState<string | null>(null);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
 
   useEffect(() => {
     fetch(`/api/complaints/${id}`)
       .then(r => r.json())
-      .then(d => setComplaint(d.complaint ?? null));
+      .then(d => {
+        const c = d.complaint ?? null;
+        setComplaint(c);
+        if (c?.evidenceName) {
+          fetch(`/api/admin/complaints/${c.id}/evidence`)
+            .then(r => r.ok ? r.json() : null)
+            .then(d => d?.signedUrl && setEvidenceUrl(d.signedUrl));
+        }
+      });
   }, [id]);
 
   const advanceStatus = useCallback(async () => {
@@ -141,6 +151,47 @@ export default function ComplaintDetailPage() {
                   <div className="bg-gray-50 border border-gray-100 p-4 mb-4">
                     <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{complaint.content}</p>
                   </div>
+
+                  {/* Evidence viewer */}
+                  {complaint.evidenceName && (
+                    <div className="mb-4">
+                      <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-2 flex items-center gap-1.5">
+                        <Paperclip className="w-3 h-3" />
+                        Evidencia adjunta
+                      </p>
+                      {!evidenceUrl ? (
+                        <div className="h-10 bg-gray-100 animate-pulse rounded" />
+                      ) : complaint.evidenceName.toLowerCase().endsWith(".pdf") ? (
+                        <a
+                          href={evidenceUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-2.5 px-4 py-2.5 bg-blue-50 border border-blue-200 text-blue-700 text-sm font-semibold hover:bg-blue-100 transition-colors"
+                        >
+                          <Download className="w-4 h-4" />
+                          {complaint.evidenceName}
+                          <span className="text-[10px] font-normal text-blue-400 ml-1">Abrir PDF</span>
+                        </a>
+                      ) : (
+                        <div className="relative group w-fit">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={evidenceUrl}
+                            alt={complaint.evidenceName}
+                            className="max-h-48 max-w-full object-contain border border-gray-200 bg-gray-50 cursor-zoom-in"
+                            onClick={() => setLightboxOpen(true)}
+                          />
+                          <button
+                            onClick={() => setLightboxOpen(true)}
+                            className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100"
+                          >
+                            <ZoomIn className="w-6 h-6 text-white drop-shadow" />
+                          </button>
+                          <p className="text-[11px] text-gray-400 mt-1">{complaint.evidenceName}</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
 
                   {/* Date */}
                   <div className="flex items-center gap-1.5 text-xs text-gray-400">
@@ -271,6 +322,46 @@ export default function ComplaintDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* Lightbox */}
+      <AnimatePresence>
+        {lightboxOpen && evidenceUrl && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4"
+            onClick={() => setLightboxOpen(false)}
+          >
+            <button
+              className="absolute top-4 right-4 p-2 bg-white/10 hover:bg-white/20 text-white rounded-full transition-colors"
+              onClick={() => setLightboxOpen(false)}
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <motion.img
+              initial={{ scale: 0.9 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0.9 }}
+              src={evidenceUrl}
+              alt={complaint.evidenceName}
+              className="max-w-full max-h-[90vh] object-contain shadow-2xl"
+              onClick={e => e.stopPropagation()}
+            />
+            <a
+              href={evidenceUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              download
+              className="absolute bottom-4 left-1/2 -translate-x-1/2 inline-flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 text-white text-sm font-medium rounded-full transition-colors"
+              onClick={e => e.stopPropagation()}
+            >
+              <Download className="w-4 h-4" />
+              Descargar
+            </a>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </AdminLayout>
   );
 }

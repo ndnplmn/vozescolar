@@ -43,6 +43,7 @@ function toComplaint(row: DBComplaint): Complaint {
     contentHash:    row.content_hash ?? "",
     adminResponse:  row.admin_response ?? undefined,
     evidenceName:   row.evidence_name ?? undefined,
+    evidenceUrl:    row.evidence_url ?? undefined,
     createdAt:      row.created_at,
     sentimentScore: row.sentiment_score ?? undefined,
     timeline: (row.timeline_entries ?? []).map((t) => ({
