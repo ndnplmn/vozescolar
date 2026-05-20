@@ -2,7 +2,7 @@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Category, Urgency, Status } from "@/lib/types";
 import { CATEGORY_LABELS, URGENCY_LABELS, STATUS_LABELS } from "@/lib/utils";
-import { Search, SlidersHorizontal, X } from "lucide-react"; // eslint-disable-line @typescript-eslint/no-unused-vars
+import { Search, SlidersHorizontal, X, AlertTriangle, Inbox, Clock, GraduationCap } from "lucide-react";
 
 export interface Filters {
   search: string;
@@ -32,6 +32,7 @@ export function FilterBar({ filters, onChange }: { filters: Filters; onChange: (
             value={filters.search}
             onChange={(e) => onChange({ ...filters, search: e.target.value })}
             placeholder="Buscar en reportes..."
+            aria-label="Buscar reportes por texto"
             className="w-full h-9 pl-8 pr-3 text-sm border border-gray-200 bg-white focus:border-crimson-400 focus:outline-none transition-colors"
           />
           {filters.search && (
@@ -91,18 +92,20 @@ export function FilterBar({ filters, onChange }: { filters: Filters; onChange: (
       </div>
 
       {/* Quick filter pills */}
-      <div className="flex gap-2 flex-wrap">
+      <div className="flex gap-2 flex-wrap" role="group" aria-label="Filtros rápidos">
         {[
-          { label: "🔴 Solo críticos",     apply: () => onChange({ ...EMPTY, urgency: "critical" }) },
-          { label: "📥 Sin atender",        apply: () => onChange({ ...EMPTY, status: "recibida" }) },
-          { label: "⏳ En proceso",         apply: () => onChange({ ...EMPTY, status: "en_proceso" }) },
-          { label: "🎓 Acoso escolar",      apply: () => onChange({ ...EMPTY, category: "acoso_escolar" }) },
-        ].map(({ label, apply }) => (
+          { label: "Solo críticos",  icon: AlertTriangle, apply: () => onChange({ ...EMPTY, urgency: "critical" }),        ariaLabel: "Filtrar: solo reportes críticos" },
+          { label: "Sin atender",    icon: Inbox,         apply: () => onChange({ ...EMPTY, status: "recibida" }),          ariaLabel: "Filtrar: reportes sin atender" },
+          { label: "En proceso",     icon: Clock,         apply: () => onChange({ ...EMPTY, status: "en_proceso" }),        ariaLabel: "Filtrar: reportes en proceso" },
+          { label: "Acoso escolar",  icon: GraduationCap, apply: () => onChange({ ...EMPTY, category: "acoso_escolar" }), ariaLabel: "Filtrar: categoría acoso escolar" },
+        ].map(({ label, icon: Icon, apply, ariaLabel }) => (
           <button
             key={label}
             onClick={apply}
-            className="text-[11px] font-medium px-3 py-1 bg-white border border-gray-200 text-gray-500 hover:border-crimson-300 hover:text-crimson-600 hover:bg-crimson-50 transition-all"
+            aria-label={ariaLabel}
+            className="flex items-center gap-1.5 text-[11px] font-medium px-3 py-1 bg-white border border-gray-200 text-gray-500 hover:border-crimson-300 hover:text-crimson-600 hover:bg-crimson-50 transition-all"
           >
+            <Icon className="w-3 h-3" aria-hidden="true" />
             {label}
           </button>
         ))}

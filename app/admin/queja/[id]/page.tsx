@@ -36,9 +36,11 @@ export default function ComplaintDetailPage() {
   const { id } = useParams<{ id: string }>();
   const [loading, setLoading]           = useState(true);
   const [complaint, setComplaint]       = useState<Complaint | null>(null);
-  const [advancing, setAdvancing]       = useState(false);
-  const [closing, setClosing]           = useState(false);
-  const [justAdvanced, setJustAdvanced] = useState(false);
+  const [advancing, setAdvancing]         = useState(false);
+  const [closing, setClosing]             = useState(false);
+  const [justAdvanced, setJustAdvanced]   = useState(false);
+  const [closeModalOpen, setCloseModalOpen] = useState(false);
+  const [closeReason, setCloseReason]     = useState("");
   const [evidenceUrl, setEvidenceUrl]   = useState<string | null>(null);
   const [evidenceFetchedAt, setEvidenceFetchedAt] = useState<number | null>(null);
   const [evidenceRefreshing, setEvidenceRefreshing] = useState(false);
@@ -85,13 +87,21 @@ export default function ComplaintDetailPage() {
     setAdvancing(false);
   }, [complaint]);
 
-  const closeCase = useCallback(async () => {
+  const closeCase = useCallback(async (reason: string) => {
     if (!complaint) return;
     setClosing(true);
+    const REASON_MESSAGES: Record<string, string> = {
+      false_report: "El reporte fue revisado y determinado como no fundamentado.",
+      duplicate:    "Este reporte es duplicado de uno previamente atendido.",
+      no_info:      "No se pudo atender por falta de información suficiente.",
+      resolved_external: "La situación fue atendida por otro canal antes de llegar a este proceso.",
+      other:        "El caso fue cerrado por el equipo administrativo.",
+    };
+    const message = REASON_MESSAGES[reason] ?? "El caso fue cerrado administrativamente.";
     const res = await fetch(`/api/complaints/${complaint.id}/status`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status: "cerrada", message: "Caso cerrado sin acción." }),
+      body: JSON.stringify({ status: "cerrada", message }),
     });
     if (res.ok) {
       setComplaint(prev => prev ? { ...prev, status: "cerrada" } : null);
@@ -99,6 +109,8 @@ export default function ComplaintDetailPage() {
       setTimeout(() => setJustAdvanced(false), 3000);
     }
     setClosing(false);
+    setCloseModalOpen(false);
+    setCloseReason("");
   }, [complaint]);
 
   const refreshEvidence = useCallback(async () => {
@@ -339,21 +351,11 @@ export default function ComplaintDetailPage() {
 
                   {/* Close without action */}
                   <button
-                    onClick={closeCase}
+                    onClick={() => setCloseModalOpen(true)}
                     disabled={advancing || closing}
                     className="flex items-center gap-2 text-gray-400 hover:text-gray-600 disabled:opacity-50 text-sm font-medium px-3 py-2.5 border border-gray-200 hover:border-gray-300 bg-white transition-colors"
                   >
-                    {closing ? (
-                      <>
-                        <svg className="animate-spin w-3.5 h-3.5" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-                        </svg>
-                        Cerrando...
-                      </>
-                    ) : (
-                      <><XCircle className="w-3.5 h-3.5" />Cerrar sin acción</>
-                    )}
+                    <XCircle className="w-3.5 h-3.5" />Cerrar sin acción
                   </button>
 
                   <AnimatePresence>
@@ -424,6 +426,83 @@ export default function ComplaintDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* Close without action modal */}
+      <AnimatePresence>
+        {closeModalOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4"
+            onClick={() => setCloseModalOpen(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              transition={{ duration: 0.15 }}
+              className="bg-white w-full max-w-sm p-6 shadow-xl"
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="flex items-start justify-between mb-4">
+                <div>
+                  <p className="font-semibold text-gray-900 text-sm">Cerrar sin acción</p>
+                  <p className="text-xs text-gray-500 mt-0.5">Folio: <span className="font-mono font-bold text-gray-700">{complaint.folio}</span></p>
+                </div>
+                <button onClick={() => setCloseModalOpen(false)} className="text-gray-400 hover:text-gray-600 transition-colors">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <p className="text-xs text-gray-500 mb-3">¿Cuál es el motivo del cierre? El estudiante verá una explicación basada en tu selección.</p>
+
+              <div className="space-y-2 mb-5">
+                {[
+                  { value: "false_report",       label: "Reporte no fundamentado" },
+                  { value: "duplicate",          label: "Duplicado de un caso ya atendido" },
+                  { value: "no_info",            label: "Información insuficiente para investigar" },
+                  { value: "resolved_external",  label: "Atendido por otro canal" },
+                  { value: "other",              label: "Otro motivo administrativo" },
+                ].map(({ value, label }) => (
+                  <button
+                    key={value}
+                    onClick={() => setCloseReason(value)}
+                    className={`w-full text-left px-3 py-2.5 border text-sm transition-all ${
+                      closeReason === value
+                        ? "border-gray-700 bg-gray-50 text-gray-800 font-medium"
+                        : "border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50"
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setCloseModalOpen(false)}
+                  className="flex-1 h-10 border border-gray-200 text-sm text-gray-600 hover:bg-gray-50 transition-colors font-medium"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={() => closeCase(closeReason)}
+                  disabled={!closeReason || closing}
+                  className="flex-1 h-10 bg-gray-700 hover:bg-gray-800 disabled:opacity-40 text-white text-sm font-semibold transition-colors flex items-center justify-center gap-2"
+                >
+                  {closing ? (
+                    <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                    </svg>
+                  ) : <><XCircle className="w-3.5 h-3.5" /> Confirmar cierre</>}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Lightbox */}
       <AnimatePresence>

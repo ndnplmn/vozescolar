@@ -10,7 +10,9 @@ const SESSION_KEY = "vozescolar_admin_auth";
 export function AdminAuthGuard({ children }: { children: React.ReactNode }) {
   const [authenticated, setAuthenticated] = useState<boolean | null>(null);
   const [pin, setPin] = useState("");
-  const [error, setError] = useState(false);
+  const [error, setError]         = useState(false);
+  const [errorMsg, setErrorMsg]   = useState("");
+  const [blocked, setBlocked]     = useState(false);
   const [show, setShow] = useState(false);
   const [shaking, setShaking] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -32,11 +34,16 @@ export function AdminAuthGuard({ children }: { children: React.ReactNode }) {
       sessionStorage.setItem(SESSION_KEY, "1");
       setAuthenticated(true);
     } else {
+      const data = await res.json().catch(() => ({}));
+      const msg  = data.error ?? "Contraseña incorrecta. Inténtalo de nuevo.";
+      const isBlocked = res.status === 429;
       setError(true);
-      setShaking(true);
+      setErrorMsg(msg);
+      setBlocked(isBlocked);
+      setShaking(!isBlocked);
       setPin("");
       setTimeout(() => setShaking(false), 500);
-      setTimeout(() => setError(false), 3500);
+      if (!isBlocked) setTimeout(() => setError(false), 4000);
     }
   }
 
@@ -86,9 +93,10 @@ export function AdminAuthGuard({ children }: { children: React.ReactNode }) {
                 <input
                   type={show ? "text" : "password"}
                   value={pin}
-                  onChange={(e) => { setPin(e.target.value); setError(false); }}
-                  onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
+                  onChange={(e) => { setPin(e.target.value); if (!blocked) setError(false); }}
+                  onKeyDown={(e) => e.key === "Enter" && !blocked && handleSubmit()}
                   placeholder="••••••••"
+                  disabled={blocked}
                   autoFocus
                   className={`
                     w-full h-11 pl-10 pr-10 bg-white/[0.05] border text-white placeholder:text-white/20 text-sm outline-none transition-colors
@@ -109,17 +117,21 @@ export function AdminAuthGuard({ children }: { children: React.ReactNode }) {
                 <motion.div
                   initial={{ opacity: 0, y: -4 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="flex items-center gap-2 mt-2"
+                  className={`flex items-start gap-2 mt-2 px-3 py-2 border ${
+                    blocked
+                      ? "bg-red-900/20 border-red-500/30"
+                      : "bg-transparent border-transparent"
+                  }`}
                 >
-                  <AlertCircle className="w-3.5 h-3.5 text-red-400 shrink-0" />
-                  <p className="text-xs text-red-400">Contraseña incorrecta. Inténtalo de nuevo.</p>
+                  <AlertCircle className="w-3.5 h-3.5 text-red-400 shrink-0 mt-0.5" />
+                  <p className="text-xs text-red-400 leading-relaxed">{errorMsg}</p>
                 </motion.div>
               )}
             </div>
 
             <button
               onClick={handleSubmit}
-              disabled={!pin || loading}
+              disabled={!pin || loading || blocked}
               className="w-full h-11 bg-crimson-600 hover:bg-crimson-500 disabled:opacity-50 text-white text-sm font-semibold tracking-wide transition-colors flex items-center justify-center gap-2"
             >
               {loading ? (

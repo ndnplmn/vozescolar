@@ -3,7 +3,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { LayoutDashboard, BarChart3, Settings, LogOut, BookOpen, Menu, Bell, ArrowUpLeft, AlertTriangle, ChevronRight, X } from "lucide-react";
+import { LayoutDashboard, BarChart3, Settings, LogOut, BookOpen, Menu, Bell, ArrowUpLeft, AlertTriangle, ChevronRight, X, Clock } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
 import { AdminAuthGuard } from "./AdminAuthGuard";
 import { CATEGORY_LABELS, URGENCY_LABELS } from "@/lib/utils";
 import { Complaint } from "@/lib/types";
@@ -35,12 +36,18 @@ function timeAgo(iso: string): string {
   return `hace ${Math.floor(diff / 86400)} d`;
 }
 
+const IDLE_WARNING_MS  = 25 * 60 * 1000; // warn at 25 min
+const IDLE_LOGOUT_MS   = 30 * 60 * 1000; // logout at 30 min
+
 export function AdminLayout({ children }: { children: React.ReactNode }) {
   const path = usePathname();
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const [notifOpen, setNotifOpen]   = useState(false);
-  const [alerts, setAlerts]         = useState<Complaint[]>([]);
-  const notifRef = useRef<HTMLDivElement>(null);
+  const [mobileOpen, setMobileOpen]       = useState(false);
+  const [notifOpen, setNotifOpen]         = useState(false);
+  const [alerts, setAlerts]               = useState<Complaint[]>([]);
+  const [sessionWarning, setSessionWarning] = useState(false);
+  const notifRef  = useRef<HTMLDivElement>(null);
+  const idleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const warnTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const title   = PAGE_TITLES[path] ?? "Panel de Administración";
   const isQueja = path.startsWith("/admin/queja/");
@@ -72,6 +79,25 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
     if (notifOpen) document.addEventListener("mousedown", onClickOutside);
     return () => document.removeEventListener("mousedown", onClickOutside);
   }, [notifOpen]);
+
+  // Session idle timeout
+  useEffect(() => {
+    function resetTimers() {
+      setSessionWarning(false);
+      if (warnTimer.current) clearTimeout(warnTimer.current);
+      if (idleTimer.current) clearTimeout(idleTimer.current);
+      warnTimer.current = setTimeout(() => setSessionWarning(true), IDLE_WARNING_MS);
+      idleTimer.current = setTimeout(() => signOut(), IDLE_LOGOUT_MS);
+    }
+    const events = ["mousemove", "keydown", "click", "scroll", "touchstart"];
+    events.forEach(e => window.addEventListener(e, resetTimers, { passive: true }));
+    resetTimers();
+    return () => {
+      events.forEach(e => window.removeEventListener(e, resetTimers));
+      if (warnTimer.current) clearTimeout(warnTimer.current);
+      if (idleTimer.current) clearTimeout(idleTimer.current);
+    };
+  }, []);
 
   return (
     <AdminAuthGuard>
@@ -267,6 +293,42 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
         </div>
 
       </div>
+
+      {/* Session timeout warning */}
+      <AnimatePresence>
+        {sessionWarning && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            className="fixed bottom-6 right-6 z-50 bg-white border border-amber-300 shadow-xl p-4 max-w-xs w-full"
+          >
+            <div className="flex items-start gap-3 mb-3">
+              <div className="w-8 h-8 bg-amber-50 flex items-center justify-center shrink-0">
+                <Clock className="w-4 h-4 text-amber-600" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-gray-800">Sesión por expirar</p>
+                <p className="text-xs text-gray-500 mt-0.5">Tu sesión se cerrará en 5 minutos por inactividad.</p>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => { setSessionWarning(false); }}
+                className="flex-1 h-9 bg-crimson-600 hover:bg-crimson-700 text-white text-xs font-semibold transition-colors"
+              >
+                Continuar sesión
+              </button>
+              <button
+                onClick={() => signOut()}
+                className="h-9 px-3 border border-gray-200 text-xs text-gray-500 hover:bg-gray-50 transition-colors"
+              >
+                Cerrar sesión
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </AdminAuthGuard>
   );
 }
