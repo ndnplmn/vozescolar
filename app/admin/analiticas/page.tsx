@@ -62,12 +62,12 @@ export default function AnalyticsPage() {
   const avgLabel = avgHours === null ? "—" : avgHours < 24 ? `${avgHours}h` : `${Math.round(avgHours / 24)}d`;
 
   const METRICS = [
-    { label: "Total reportes",    value: total,     icon: Inbox,         color: "text-gray-600",   bg: "bg-gray-100",   accent: "border-l-gray-400"   },
-    { label: "Críticos",          value: critical,  icon: AlertTriangle, color: "text-red-600",    bg: "bg-red-50",     accent: "border-l-red-500"    },
-    { label: "% Resolución",      value: `${rate}%`,icon: PercentIcon,   color: "text-purple-600", bg: "bg-purple-50",  accent: "border-l-purple-500" },
-    { label: "Tiempo prom. cierre",value: avgLabel, icon: Timer,         color: "text-blue-600",   bg: "bg-blue-50",    accent: "border-l-blue-500"   },
-    { label: "Resueltos",         value: resolved,  icon: CheckCircle2,  color: "text-green-600",  bg: "bg-green-50",   accent: "border-l-green-500"  },
-    { label: "Pendientes >7 días", value: overdue7, icon: Clock,         color: overdue7 > 0 ? "text-orange-600" : "text-gray-400", bg: overdue7 > 0 ? "bg-orange-50" : "bg-gray-100", accent: overdue7 > 0 ? "border-l-orange-500" : "border-l-gray-300" },
+    { label: "Total reportes",     value: total,      icon: Inbox,         alert: false },
+    { label: "Críticos",           value: critical,   icon: AlertTriangle, alert: critical > 0 },
+    { label: "% Resolución",       value: `${rate}%`, icon: PercentIcon,   alert: false },
+    { label: "Tiempo prom. cierre",value: avgLabel,   icon: Timer,         alert: false },
+    { label: "Resueltos",          value: resolved,   icon: CheckCircle2,  alert: false },
+    { label: "Pendientes >7 días", value: overdue7,   icon: Clock,         alert: overdue7 > 0 },
   ];
 
   return (
@@ -76,22 +76,22 @@ export default function AnalyticsPage() {
 
         {/* Metric cards */}
         <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
-          {METRICS.map(({ label, value, icon: Icon, color, bg, accent }) => (
-            <div key={label} className={`bg-white border border-gray-200 border-l-4 ${accent} p-5`}>
+          {METRICS.map(({ label, value, icon: Icon, alert }) => (
+            <div key={label} className="bg-white border border-gray-100 shadow-sm p-5 flex flex-col gap-4">
               {loading ? (
-                <div className="space-y-2">
-                  <div className="h-8 w-12 bg-gray-200 animate-pulse rounded" />
-                  <div className="h-3 w-20 bg-gray-100 animate-pulse rounded" />
+                <div className="space-y-3">
+                  <div className="h-2.5 w-24 bg-gray-100 animate-pulse rounded" />
+                  <div className="h-8 w-16 bg-gray-100 animate-pulse rounded" />
                 </div>
               ) : (
                 <>
-                  <div className="flex items-start justify-between mb-3">
-                    <p className="text-2xl font-bold text-gray-900">{value}</p>
-                    <div className={`w-8 h-8 ${bg} rounded-lg flex items-center justify-center`}>
-                      <Icon className={`w-4 h-4 ${color}`} />
-                    </div>
+                  <div className="flex items-center justify-between">
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none">{label}</p>
+                    <Icon className="w-3.5 h-3.5 text-gray-300" />
                   </div>
-                  <p className="text-xs text-gray-500 font-medium">{label}</p>
+                  <p className={`text-3xl font-bold tabular-nums leading-none ${alert ? "text-red-600" : "text-gray-900"}`}>
+                    {value}
+                  </p>
                 </>
               )}
             </div>

@@ -54,11 +54,11 @@ export default function AdminPage() {
   }), [complaints]);
 
   const STATS = [
-    { label: "Total reportes", value: stats.total,      icon: Inbox,         color: "text-gray-700",  bg: "bg-gray-100",  border: "border-l-gray-400" },
-    { label: "Sin atender",    value: stats.pending,    icon: Clock,         color: "text-blue-700",  bg: "bg-blue-50",   border: "border-l-blue-400" },
-    { label: "En proceso",     value: stats.inProgress, icon: Activity,      color: "text-amber-700", bg: "bg-amber-50",  border: "border-l-amber-400" },
-    { label: "Críticos",       value: stats.critical,   icon: AlertTriangle, color: "text-red-700",   bg: "bg-red-50",    border: "border-l-red-500" },
-    { label: "Resueltos",      value: stats.resolved,   icon: CheckCircle2,  color: "text-green-700", bg: "bg-green-50",  border: "border-l-green-500" },
+    { label: "Total reportes", value: stats.total,      icon: Inbox,         alert: false },
+    { label: "Sin atender",    value: stats.pending,    icon: Clock,         alert: stats.pending > 0 },
+    { label: "En proceso",     value: stats.inProgress, icon: Activity,      alert: false },
+    { label: "Críticos",       value: stats.critical,   icon: AlertTriangle, alert: stats.critical > 0 },
+    { label: "Resueltos",      value: stats.resolved,   icon: CheckCircle2,  alert: false },
   ];
 
   const isFiltered = filtered.length !== complaints.length;
@@ -69,17 +69,15 @@ export default function AdminPage() {
 
         {/* Stats row */}
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
-          {STATS.map(({ label, value, icon: Icon, color, bg, border }) => (
-            <div key={label} className={`bg-white border border-gray-200 border-l-4 ${border} p-4 flex items-center gap-3`}>
-              <div className={`w-9 h-9 ${bg} flex items-center justify-center shrink-0`}>
-                <Icon className={`w-4 h-4 ${color}`} />
+          {STATS.map(({ label, value, icon: Icon, alert }) => (
+            <div key={label} className="bg-white border border-gray-100 shadow-sm p-4 flex flex-col gap-3">
+              <div className="flex items-center justify-between">
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none">{label}</p>
+                <Icon className="w-3.5 h-3.5 text-gray-300" />
               </div>
-              <div>
-                <p className="text-xl font-bold text-gray-900 leading-none">
-                  {loading ? <span className="inline-block w-6 h-5 bg-gray-200 animate-pulse rounded" /> : value}
-                </p>
-                <p className="text-[11px] text-gray-500 mt-0.5 font-medium">{label}</p>
-              </div>
+              <p className={`text-2xl font-bold tabular-nums leading-none ${alert ? "text-red-600" : "text-gray-900"}`}>
+                {loading ? <span className="inline-block w-8 h-6 bg-gray-100 animate-pulse rounded" /> : value}
+              </p>
             </div>
           ))}
         </div>
