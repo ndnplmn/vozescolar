@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Role } from "@/lib/types";
-import { Send, ArrowRight, AlertTriangle, CheckCircle2, Loader2, Phone, HeartHandshake } from "lucide-react";
+import { Send, ArrowRight, AlertTriangle, CheckCircle2, Loader2, Phone, HeartHandshake, Pencil, Check, X } from "lucide-react";
 
 interface Message { role: "assistant" | "user"; content: string; }
 
@@ -45,18 +45,23 @@ export function Step2Chat({
   const [messages, setMessages] = useState<Message[]>([
     { role: "assistant", content: ROLE_OPENERS[userRole] },
   ]);
-  const [input, setInput] = useState("");
+  const [input, setInput]       = useState("");
   const [streaming, setStreaming] = useState(false);
-  const [ready, setReady] = useState(false);
-  const [crisis, setCrisis] = useState(false);
+  const [ready, setReady]       = useState(false);
+  const [crisis, setCrisis]     = useState(false);
   const [wordCount, setWordCount] = useState(0);
 
+  // Edit state
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [editDraft, setEditDraft]       = useState("");
+  const editRef = useRef<HTMLTextAreaElement>(null);
+
   // Summary state
-  const [summary, setSummary] = useState<string | null>(null);
+  const [summary, setSummary]             = useState<string | null>(null);
   const [summaryLoading, setSummaryLoading] = useState(false);
   const [summaryFetched, setSummaryFetched] = useState(false);
 
-  const bottomRef = useRef<HTMLDivElement>(null);
+  const bottomRef   = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
@@ -98,14 +103,16 @@ export function Step2Chat({
     onComplete(allUserText);
   }, [userMessages, onComplete]);
 
-  async function sendMessage() {
-    if (!input.trim() || streaming) return;
-    const text = input.trim();
+  // Accepts optional overrides so edits can re-send from a truncated history
+  async function sendMessage(textOverride?: string, baseMessages?: Message[]) {
+    const text = (textOverride ?? input).trim();
+    if (!text || streaming) return;
+    const history    = baseMessages ?? messages;
     const userMsg: Message = { role: "user", content: text };
-    const newMessages = [...messages, userMsg];
+    const newMessages = [...history, userMsg];
 
     setMessages([...newMessages, { role: "assistant", content: "" }]);
-    setInput("");
+    if (!textOverride) setInput("");
 
     if (hasCrisis(text)) setCrisis(true);
 
@@ -185,6 +192,37 @@ export function Step2Chat({
     }
   }
 
+  function startEdit(index: number) {
+    setEditingIndex(index);
+    setEditDraft(messages[index].content);
+    setTimeout(() => {
+      editRef.current?.focus();
+      editRef.current?.select();
+    }, 50);
+  }
+
+  function cancelEdit() {
+    setEditingIndex(null);
+    setEditDraft("");
+  }
+
+  async function confirmEdit(index: number) {
+    const newText = editDraft.trim();
+    if (!newText || newText === messages[index].content) { cancelEdit(); return; }
+
+    // Keep all messages before the edited one (assistant messages up to, not including, the user message at index)
+    const truncated = messages.slice(0, index);
+
+    // Reset derived state so summary and ready re-evaluate with new content
+    setReady(false);
+    setSummary(null);
+    setSummaryFetched(false);
+    setEditingIndex(null);
+    setEditDraft("");
+
+    await sendMessage(newText, truncated);
+  }
+
   const canSend = input.trim().length > 0 && !streaming;
   const isLastAssistant = (i: number) =>
     i === messages.length - 1 && messages[i].role === "assistant";
@@ -250,41 +288,92 @@ export function Step2Chat({
       </AnimatePresence>
 
       {/* Chat window */}
-      <div className="border border-crimson-100 bg-gray-50 flex flex-col h-72 mb-3 overflow-hidden">
-        <div className="flex-1 overflow-y-auto p-4 space-y-3">
+      <div className="border border-crimson-100 bg-gray-50 flex flex-col h-[min(288px,45vh)] sm:h-72 mb-3 overflow-hidden">
+        <div className="chat-scroll flex-1 overflow-y-auto p-4 space-y-3">
           <AnimatePresence initial={false}>
-            {messages.map((msg, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.2 }}
-                className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
-              >
-                {msg.role === "assistant" && (
-                  <span className="w-5 h-5 rounded-full bg-crimson-600 flex items-center justify-center text-white text-[8px] font-bold mr-2 mt-1 shrink-0">
-                    VE
-                  </span>
-                )}
-                {msg.content === "__error__" ? (
-                  <div className="max-w-[82%] flex items-start gap-2 bg-amber-50 border border-amber-200 px-3 py-2.5 text-xs text-amber-700">
-                    <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
-                    <span>Hubo un problema de conexión. Puedes seguir escribiendo o continuar con el reporte.</span>
-                  </div>
-                ) : (
-                  <div
-                    className={`max-w-[82%] px-3.5 py-2.5 text-sm leading-relaxed ${
-                      msg.role === "user"
-                        ? "bg-crimson-600 text-white"
-                        : "bg-white border border-crimson-100 text-gray-700"
-                    }`}
-                  >
-                    {msg.content}
-                    {streaming && isLastAssistant(i) && <BlinkingCursor />}
-                  </div>
-                )}
-              </motion.div>
-            ))}
+            {messages.map((msg, i) => {
+              const isEditing = editingIndex === i;
+              const canEdit   = msg.role === "user" && !streaming && msg.content !== "__error__";
+
+              return (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+                >
+                  {msg.role === "assistant" && (
+                    <span className="w-5 h-5 rounded-full bg-crimson-600 flex items-center justify-center text-white text-[8px] font-bold mr-2 mt-1 shrink-0">
+                      VE
+                    </span>
+                  )}
+
+                  {isEditing ? (
+                    /* ── Inline edit mode ── */
+                    <div className="max-w-[82%] w-full flex flex-col gap-1.5">
+                      <textarea
+                        ref={editRef}
+                        value={editDraft}
+                        onChange={(e) => setEditDraft(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); confirmEdit(i); }
+                          if (e.key === "Escape") cancelEdit();
+                        }}
+                        rows={3}
+                        className="w-full px-3 py-2.5 text-sm bg-white border-2 border-crimson-400 text-gray-800 resize-none outline-none leading-relaxed"
+                      />
+                      <div className="flex items-center justify-end gap-2">
+                        <span className="text-[10px] text-gray-400 mr-auto">Enter para guardar · Esc para cancelar</span>
+                        <button
+                          onClick={cancelEdit}
+                          className="flex items-center gap-1 text-[11px] text-gray-400 hover:text-gray-600 px-2 py-1 border border-gray-200 hover:border-gray-300 transition-colors"
+                        >
+                          <X className="w-3 h-3" /> Cancelar
+                        </button>
+                        <button
+                          onClick={() => confirmEdit(i)}
+                          disabled={!editDraft.trim() || editDraft.trim() === messages[i].content}
+                          className="flex items-center gap-1 text-[11px] text-white bg-crimson-600 hover:bg-crimson-700 disabled:opacity-40 px-2.5 py-1 transition-colors"
+                        >
+                          <Check className="w-3 h-3" /> Guardar y reenviar
+                        </button>
+                      </div>
+                    </div>
+                  ) : msg.content === "__error__" ? (
+                    <div className="max-w-[82%] flex items-start gap-2 bg-amber-50 border border-amber-200 px-3 py-2.5 text-xs text-amber-700">
+                      <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                      <span>Hubo un problema de conexión. Puedes seguir escribiendo o continuar con el reporte.</span>
+                    </div>
+                  ) : (
+                    /* ── Normal bubble ── */
+                    <div className={`relative group max-w-[82%] ${canEdit ? "cursor-default" : ""}`}>
+                      <div
+                        className={`px-3.5 py-2.5 text-sm leading-relaxed ${
+                          msg.role === "user"
+                            ? "bg-crimson-600 text-white"
+                            : "bg-white border border-crimson-100 text-gray-700"
+                        }`}
+                      >
+                        {msg.content}
+                        {streaming && isLastAssistant(i) && <BlinkingCursor />}
+                      </div>
+
+                      {/* Edit button — only on user bubbles, visible on hover */}
+                      {canEdit && (
+                        <button
+                          onClick={() => startEdit(i)}
+                          title="Editar mensaje"
+                          className="absolute -top-2 -left-7 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity p-1 bg-white border border-gray-200 hover:border-crimson-300 hover:text-crimson-600 text-gray-400 shadow-sm"
+                        >
+                          <Pencil className="w-3 h-3" />
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </motion.div>
+              );
+            })}
           </AnimatePresence>
           <div ref={bottomRef} />
         </div>
@@ -318,9 +407,9 @@ export function Step2Chat({
           }}
         />
         <Button
-          onClick={sendMessage}
+          onClick={() => sendMessage()}
           disabled={!canSend}
-          className="bg-crimson-600 hover:bg-crimson-700 self-end rounded-none px-3.5 h-10"
+          className="bg-crimson-600 hover:bg-crimson-700 self-end rounded-none px-3.5 h-10 min-h-[44px] sm:min-h-0"
           aria-label="Enviar"
         >
           <Send className="w-4 h-4" />

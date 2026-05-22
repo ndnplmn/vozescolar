@@ -30,16 +30,59 @@
 @layer base {
   * {
     border-color: hsl(var(--border));
+    /* Remove iOS tap highlight flash */
+    -webkit-tap-highlight-color: transparent;
   }
+
+  html {
+    scroll-behavior: smooth;
+    /* Use dynamic viewport height — accounts for mobile browser chrome */
+    min-height: 100dvh;
+  }
+
   body {
     @apply bg-white text-gray-900 font-sans antialiased;
+    /* Prevent content shifting when scrollbar appears/disappears */
+    scrollbar-gutter: stable;
   }
+
   h1, h2 {
     @apply font-serif;
+  }
+
+  /* Improve touch targets globally — minimum 44px */
+  button, [role="button"], a {
+    touch-action: manipulation;
   }
 }
 
 /* Harvard-style institutional divider */
 .divider-crimson {
   @apply block w-12 h-0.5 bg-crimson-600 mb-6;
+}
+
+/* Chat scrollbar — thin, unobtrusive */
+.chat-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+.chat-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.chat-scroll::-webkit-scrollbar-thumb {
+  background: #e5e7eb;
+  border-radius: 2px;
+}
+.chat-scroll::-webkit-scrollbar-thumb:hover {
+  background: #d1d5db;
+}
+
+/* Admin content scroll */
+.admin-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+.admin-scroll::-webkit-scrollbar-track {
+  background: #f9fafb;
+}
+.admin-scroll::-webkit-scrollbar-thumb {
+  background: #e5e7eb;
 }

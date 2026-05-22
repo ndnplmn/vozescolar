@@ -41,6 +41,16 @@ export default function SeguimientoPage() {
               <p className="text-sm font-medium text-gray-800 leading-tight">Hermenegildo Galeana</p>
             </div>
           </Link>
+          <div className="flex items-center gap-4">
+            <Link href="/" className="hidden sm:block text-sm text-gray-500 hover:text-crimson-600 transition-colors">
+              Inicio
+            </Link>
+            <Link href="/nueva-queja">
+              <Button size="sm" className="bg-crimson-600 hover:bg-crimson-700 rounded-none text-xs px-5 h-8 tracking-wide font-semibold">
+                Hacer un reporte
+              </Button>
+            </Link>
+          </div>
         </div>
       </header>
 

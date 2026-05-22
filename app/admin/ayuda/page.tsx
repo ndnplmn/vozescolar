@@ -72,12 +72,12 @@ function Divider() {
 }
 
 /* ── Accordion section ── */
-function AccordionSection({ section, defaultOpen = false }: { section: Section; defaultOpen?: boolean }) {
-  const [open, setOpen] = useState(defaultOpen);
+function AccordionSection({ section, open, onToggle }: { section: Section; open: boolean; onToggle: () => void }) {
   return (
     <div className="border border-gray-200 bg-white overflow-hidden">
       <button
-        onClick={() => setOpen((v) => !v)}
+        onClick={onToggle}
+        aria-expanded={open}
         className="w-full flex items-center justify-between px-6 py-5 hover:bg-gray-50 transition-colors group"
       >
         <div className="flex items-center gap-4">
@@ -107,6 +107,21 @@ function AccordionSection({ section, defaultOpen = false }: { section: Section; 
    MAIN PAGE
 ══════════════════════════════════════════ */
 export default function AyudaPage() {
+  const [openSections, setOpenSections] = useState<Set<string>>(new Set(["acceso"]));
+
+  function toggle(id: string) {
+    setOpenSections(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  }
+
+  function openAndScroll(id: string) {
+    setOpenSections(prev => new Set(Array.from(prev).concat(id)));
+    setTimeout(() => document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" }), 60);
+  }
+
   const sections: Section[] = [
     /* ─── 1. Acceso ─── */
     {
@@ -118,7 +133,7 @@ export default function AyudaPage() {
         <div className="space-y-5 pt-2">
           <div className="space-y-4">
             <Step n={1} title="Abre la página principal del buzón">
-              <p>Entra a la URL de VozEscolar desde cualquier navegador. En el pie de página encontrarás el enlace <span className="font-mono bg-gray-100 px-1.5 py-0.5 text-xs">🔒 Portal admin</span>.</p>
+              <p>Entra a la URL de VozEscolar desde cualquier navegador. En el pie de página encontrarás el enlace <span className="font-mono bg-gray-100 px-1.5 py-0.5 text-xs">Portal admin</span>.</p>
             </Step>
             <Step n={2} title='Haz clic en "Portal admin"'>
               <p>El enlace está en la esquina inferior derecha de la página, discreto por seguridad. Te llevará a la pantalla de acceso.</p>
@@ -348,7 +363,7 @@ export default function AyudaPage() {
           </p>
           <div className="space-y-4">
             <Step n={1} title="El reportante guarda su folio">
-              <p>Al enviar el reporte, la plataforma genera un folio único (ej. <span className="font-mono bg-gray-100 px-1.5 py-0.5 text-xs">VE-2026-0001</span>). El reportante debe guardarlo para dar seguimiento.</p>
+              <p>Al enviar el reporte, la plataforma genera un folio único (ej. <span className="font-mono bg-gray-100 px-1.5 py-0.5 text-xs">VE-2026-A1B2C3</span>). El reportante debe guardarlo para dar seguimiento.</p>
             </Step>
             <Step n={2} title='El reportante entra a "Consultar folio"'>
               <p>Desde la página principal puede ingresar su folio y ver la línea de tiempo completa del caso.</p>
@@ -377,7 +392,7 @@ export default function AyudaPage() {
           </p>
           <div className="space-y-4">
             <Step n={1} title="Tarjetas de resumen">
-              <p>Las 4 tarjetas superiores muestran: total de reportes, cuántos son críticos, cuántos fueron resueltos y el porcentaje de resolución acumulado.</p>
+              <p>Las tarjetas superiores muestran: total de reportes, sin atender, en proceso, críticos, resueltos, tiempo promedio de resolución y reportes con más de 7 días sin atención.</p>
             </Step>
             <Step n={2} title="Gráfica de categorías">
               <p>Muestra la distribución de reportes por tipo. Si acoso escolar domina, es una señal de que se requiere una intervención más amplia.</p>
@@ -418,11 +433,11 @@ export default function AyudaPage() {
               <p>Puedes ingresar la URL de una imagen para reemplazar el logo actual. Usa una imagen cuadrada en formato SVG o PNG de al menos 64×64 px.</p>
             </Step>
             <Step n={3} title='Guardar cambios'>
-              <p>Los cambios se guardan localmente en el navegador. Para hacerlos permanentes en todos los dispositivos, contacta al administrador técnico del sistema.</p>
+              <p>Haz clic en <strong>"Guardar cambios"</strong>. Los cambios se sincronizan en la nube y son visibles en todos los dispositivos de inmediato.</p>
             </Step>
           </div>
           <Callout type="info">
-            Los cambios de configuración son locales al navegador donde los realizas. En una actualización futura, la configuración se sincronizará en la nube.
+            Los cambios de configuración se guardan en la base de datos del sistema. Son globales y permanentes — cualquier dispositivo que abra el panel reflejará los cambios.
           </Callout>
         </div>
       ),
@@ -537,24 +552,27 @@ export default function AyudaPage() {
           <p className="text-xs font-bold text-crimson-700 uppercase tracking-wide mb-3">Contenido de esta guía</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
             {sections.map((s, i) => (
-              <a
+              <button
                 key={s.id}
-                href={`#${s.id}`}
-                onClick={(e) => { e.preventDefault(); document.getElementById(s.id)?.scrollIntoView({ behavior: "smooth" }); }}
-                className="flex items-center gap-2 text-xs text-crimson-700 hover:text-crimson-900 font-medium transition-colors"
+                onClick={() => openAndScroll(s.id)}
+                className="flex items-center gap-2 text-xs text-crimson-700 hover:text-crimson-900 font-medium transition-colors text-left"
               >
                 <span className="w-4 h-4 bg-crimson-600 text-white text-[10px] flex items-center justify-center font-bold shrink-0">{i + 1}</span>
                 {s.title}
-              </a>
+              </button>
             ))}
           </div>
         </div>
 
         {/* Sections */}
         <div className="space-y-3">
-          {sections.map((section, i) => (
+          {sections.map((section) => (
             <div key={section.id} id={section.id}>
-              <AccordionSection section={section} defaultOpen={i === 0} />
+              <AccordionSection
+                section={section}
+                open={openSections.has(section.id)}
+                onToggle={() => toggle(section.id)}
+              />
             </div>
           ))}
         </div>

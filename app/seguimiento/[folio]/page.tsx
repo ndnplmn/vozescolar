@@ -57,7 +57,52 @@ export default function TrackingPage() {
     });
   }
 
-  if (complaint === undefined) return null;
+  if (complaint === undefined) return (
+    <div className="min-h-screen bg-white flex flex-col">
+      <header className="border-b border-crimson-200">
+        <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="w-10 h-10 bg-gray-100 animate-pulse rounded" />
+            <div className="space-y-1.5">
+              <div className="h-2.5 w-14 bg-gray-200 animate-pulse rounded" />
+              <div className="h-3 w-28 bg-gray-100 animate-pulse rounded" />
+            </div>
+          </div>
+        </div>
+      </header>
+      <main className="flex-1 px-4 py-12">
+        <div className="max-w-lg mx-auto space-y-4">
+          <div className="border border-crimson-100 p-5 space-y-3">
+            <div className="w-8 h-0.5 bg-crimson-100" />
+            <div className="flex justify-between">
+              <div className="h-3 w-32 bg-gray-100 animate-pulse rounded" />
+              <div className="h-5 w-16 bg-gray-100 animate-pulse rounded-full" />
+            </div>
+            <div className="h-4 w-48 bg-gray-200 animate-pulse rounded" />
+            <div className="h-3 w-24 bg-gray-100 animate-pulse rounded" />
+          </div>
+          {[0, 1, 2, 3].map(i => (
+            <div key={i} className="flex gap-4">
+              <div className="flex flex-col items-center">
+                <div className={`w-6 h-6 rounded-full animate-pulse ${i === 0 ? "bg-crimson-100" : "bg-gray-100"}`} />
+                {i < 3 && <div className="w-0.5 h-10 mt-1 bg-gray-100 animate-pulse" />}
+              </div>
+              <div className="pt-0.5 pb-4 space-y-1.5 flex-1">
+                <div className={`h-4 animate-pulse rounded ${i === 0 ? "w-28 bg-crimson-100" : "w-20 bg-gray-100"}`} />
+                <div className="h-3 w-full bg-gray-50 animate-pulse rounded" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </main>
+      <footer className="border-t border-crimson-200 py-4">
+        <div className="max-w-6xl mx-auto px-6 flex items-center justify-between text-xs text-gray-400">
+          <span>© {new Date().getFullYear()} CETIS 52 Hermenegildo Galeana</span>
+          <span className="text-crimson-600 font-medium">VozEscolar</span>
+        </div>
+      </footer>
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-white flex flex-col">

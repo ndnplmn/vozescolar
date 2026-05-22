@@ -135,7 +135,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
                   href={href}
                   onClick={() => setMobileOpen(false)}
                   className={`
-                    flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all group
+                    flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all group active:scale-[0.97]
                     ${active
                       ? "bg-crimson-600 text-white shadow-lg shadow-crimson-900/30"
                       : "text-white/50 hover:bg-white/[0.06] hover:text-white/90"
@@ -288,7 +288,17 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
 
           {/* Page content */}
           <main className="flex-1 overflow-auto">
-            {children}
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={path}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2, ease: "easeOut" }}
+              >
+                {children}
+              </motion.div>
+            </AnimatePresence>
           </main>
         </div>
 

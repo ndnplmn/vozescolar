@@ -8,17 +8,25 @@ import { Step3Category } from "./Step3Category";
 import { Step4Evidence } from "./Step4Evidence";
 import { Step5Confirm } from "./Step5Confirm";
 import { Role, Category, Urgency } from "@/lib/types";
-import { AlertTriangle, X } from "lucide-react";
+import { AlertTriangle, X, ChevronLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { ChevronLeft } from "lucide-react";
+import { DEFAULT_SCHOOL_CONFIG } from "@/lib/config";
 
 export function IntakeShell() {
   const router = useRouter();
+  const [schoolConfig, setSchoolConfig] = useState(DEFAULT_SCHOOL_CONFIG);
   const [step, setStep] = useState(0);
   const [submitted, setSubmitted] = useState(false);
   const [submitError, setSubmitError] = useState(false);
   const [confirmLeave, setConfirmLeave] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/admin/settings")
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d) setSchoolConfig(d); })
+      .catch(() => {});
+  }, []);
 
   // Warn before browser navigation mid-flow
   useEffect(() => {
@@ -105,17 +113,17 @@ export function IntakeShell() {
       <header className="border-b border-crimson-200 sticky top-0 bg-white z-30">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
           <a href="/" onClick={handleLogoClick} className="flex items-center gap-3.5 cursor-pointer">
-            <Image src="/cetis52-logo.svg" alt="CETIS 52" width={36} height={36} />
+            <Image src={schoolConfig.logoUrl} alt={schoolConfig.shortName} width={36} height={36} />
             <div>
-              <p className="text-[10px] font-bold tracking-[0.18em] text-crimson-600 uppercase leading-none mb-0.5">CETIS 52</p>
-              <p className="text-xs font-medium text-gray-700 leading-none">Hermenegildo Galeana</p>
+              <p className="text-[10px] font-bold tracking-[0.18em] text-crimson-600 uppercase leading-none mb-0.5">{schoolConfig.shortName}</p>
+              <p className="text-xs font-medium text-gray-700 leading-none">{schoolConfig.name.replace(schoolConfig.shortName, "").trim()}</p>
             </div>
           </a>
           <span className="text-xs text-gray-400 hidden sm:block font-medium tracking-wide">Canal confidencial · Buzón oficial</span>
         </div>
       </header>
 
-      <main className="flex-1 flex items-start justify-center px-4 py-10">
+      <main className="flex-1 flex items-start justify-center px-3 sm:px-4 py-4 sm:py-10">
         <div className="w-full max-w-lg">
 
           {submitError && (
@@ -140,11 +148,11 @@ export function IntakeShell() {
           </div>
 
           <div className="border border-t-0 border-crimson-200 bg-white">
-            <div className="flex items-center justify-between px-8 pt-6 pb-0">
+            <div className="flex items-center justify-between px-5 sm:px-8 pt-5 sm:pt-6 pb-0">
               {step > 0 ? (
                 <button
                   onClick={back}
-                  className="flex items-center gap-1 text-xs text-gray-400 hover:text-crimson-600 transition-colors group"
+                  className="flex items-center gap-1 text-xs text-gray-400 hover:text-crimson-600 transition-colors group min-h-[44px] sm:min-h-0"
                 >
                   <ChevronLeft className="w-3.5 h-3.5 transition-transform group-hover:-translate-x-0.5" />
                   Volver
@@ -155,7 +163,7 @@ export function IntakeShell() {
               </span>
             </div>
 
-            <div className="px-8 pb-8 pt-4">
+            <div className="px-5 sm:px-8 pb-6 sm:pb-8 pt-4">
               <StepIndicator current={step} />
               <AnimatePresence mode="wait" custom={dir}>
                 <motion.div

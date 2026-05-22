@@ -69,7 +69,7 @@ export function SentimentGauge({ score }: { score: number }) {
       </div>
 
       {/* Label badge */}
-      <span className={`text-xs font-semibold px-3 py-1 border rounded-full ${range.bg} ${range.text} ${range.border}`}>
+      <span className={`text-xs font-semibold px-3 py-1 border ${range.bg} ${range.text} ${range.border}`}>
         {range.label}
       </span>
 

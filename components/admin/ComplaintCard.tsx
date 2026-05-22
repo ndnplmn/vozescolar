@@ -53,7 +53,7 @@ export function ComplaintCard({ complaint, index }: { complaint: Complaint; inde
       transition={{ delay: index * 0.035, duration: 0.25 }}
     >
       <Link href={`/admin/queja/${complaint.id}`} className="block group">
-        <div className={`bg-white border hover:shadow-md transition-all duration-200 flex overflow-hidden ${
+        <div className={`bg-white border hover:shadow-lg hover:-translate-y-px transition-all duration-150 flex overflow-hidden ${
           overdue === "red" ? "border-red-300 hover:border-red-400" :
           overdue === "orange" ? "border-orange-300 hover:border-orange-400" :
           "border-gray-200 hover:border-gray-300"
