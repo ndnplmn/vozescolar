@@ -3,7 +3,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { LayoutDashboard, BarChart3, Settings, LogOut, BookOpen, Menu, Bell, ArrowUpLeft, AlertTriangle, ChevronRight, X, Clock } from "lucide-react";
+import { LayoutDashboard, BarChart3, Settings, LogOut, BookOpen, Menu, Bell, AlertTriangle, ChevronRight, X, Clock, ExternalLink } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { AdminAuthGuard } from "./AdminAuthGuard";
 import { CATEGORY_LABELS, URGENCY_LABELS } from "@/lib/utils";
@@ -43,11 +43,13 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
   const path = usePathname();
   const [mobileOpen, setMobileOpen]       = useState(false);
   const [notifOpen, setNotifOpen]         = useState(false);
+  const [userMenuOpen, setUserMenuOpen]   = useState(false);
   const [alerts, setAlerts]               = useState<Complaint[]>([]);
   const [sessionWarning, setSessionWarning] = useState(false);
-  const notifRef  = useRef<HTMLDivElement>(null);
-  const idleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const warnTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const notifRef   = useRef<HTMLDivElement>(null);
+  const userMenuRef = useRef<HTMLDivElement>(null);
+  const idleTimer  = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const warnTimer  = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const title   = PAGE_TITLES[path] ?? "Panel de Administración";
   const isQueja = path.startsWith("/admin/queja/");
@@ -69,16 +71,15 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
     return () => clearInterval(interval);
   }, [path]);
 
-  // Close panel when clicking outside
+  // Close panels when clicking outside
   useEffect(() => {
     function onClickOutside(e: MouseEvent) {
-      if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
-        setNotifOpen(false);
-      }
+      if (notifRef.current && !notifRef.current.contains(e.target as Node)) setNotifOpen(false);
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) setUserMenuOpen(false);
     }
-    if (notifOpen) document.addEventListener("mousedown", onClickOutside);
+    if (notifOpen || userMenuOpen) document.addEventListener("mousedown", onClickOutside);
     return () => document.removeEventListener("mousedown", onClickOutside);
-  }, [notifOpen]);
+  }, [notifOpen, userMenuOpen]);
 
   // Session idle timeout
   useEffect(() => {
@@ -152,22 +153,9 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
             })}
           </nav>
 
-          {/* Bottom */}
-          <div className="px-3 py-4 border-t border-white/[0.06] space-y-1">
-            <Link
-              href="/"
-              className="w-full flex items-center gap-3 px-3 py-2 text-sm text-white/40 hover:text-white/80 hover:bg-white/[0.06] rounded-lg transition-all"
-            >
-              <ArrowUpLeft className="w-4 h-4 shrink-0" />
-              Ir al sitio público
-            </Link>
-            <button
-              onClick={signOut}
-              className="w-full flex items-center gap-3 px-3 py-2 text-sm text-white/40 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-all"
-            >
-              <LogOut className="w-4 h-4 shrink-0" />
-              Cerrar sesión
-            </button>
+          {/* Bottom — version stamp */}
+          <div className="px-6 py-4 border-t border-white/[0.06]">
+            <p className="text-[10px] text-white/20 font-medium tracking-wide">VozEscolar · CETIS 52</p>
           </div>
         </aside>
 
@@ -280,8 +268,52 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
                 )}
               </div>
 
-              <div className="w-8 h-8 bg-crimson-600 rounded-full flex items-center justify-center">
-                <span className="text-white text-xs font-bold">A</span>
+              {/* User menu */}
+              <div className="relative" ref={userMenuRef}>
+                <button
+                  onClick={() => { setUserMenuOpen(v => !v); setNotifOpen(false); }}
+                  className={`w-8 h-8 bg-crimson-600 rounded-full flex items-center justify-center transition-opacity hover:opacity-80 ${userMenuOpen ? "ring-2 ring-crimson-300 ring-offset-1" : ""}`}
+                  aria-label="Menú de usuario"
+                >
+                  <span className="text-white text-xs font-bold">A</span>
+                </button>
+
+                <AnimatePresence>
+                  {userMenuOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.95, y: -4 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.95, y: -4 }}
+                      transition={{ duration: 0.12 }}
+                      className="absolute right-0 top-full mt-2 w-52 bg-white border border-gray-200 shadow-lg z-50 overflow-hidden"
+                    >
+                      {/* Identity */}
+                      <div className="px-4 py-3 border-b border-gray-100">
+                        <p className="text-xs font-semibold text-gray-800">Administrador</p>
+                        <p className="text-[11px] text-gray-400 mt-0.5">CETIS 52 · Panel de control</p>
+                      </div>
+
+                      {/* Actions */}
+                      <div className="py-1">
+                        <Link
+                          href="/"
+                          onClick={() => setUserMenuOpen(false)}
+                          className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors"
+                        >
+                          <ExternalLink className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                          Ir al sitio público
+                        </Link>
+                        <button
+                          onClick={() => { setUserMenuOpen(false); signOut(); }}
+                          className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                        >
+                          <LogOut className="w-3.5 h-3.5 shrink-0" />
+                          Cerrar sesión
+                        </button>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             </div>
           </header>
