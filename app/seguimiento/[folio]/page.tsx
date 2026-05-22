@@ -5,7 +5,7 @@ import { Complaint } from "@/lib/types";
 import { supabase } from "@/lib/supabase";
 import { ComplaintTimeline } from "@/components/tracking/ComplaintTimeline";
 import { motion } from "framer-motion";
-import { CheckCircle2, AlertCircle, Copy, Check, PlusCircle, Home, Wifi, WifiOff } from "lucide-react";
+import { CheckCircle2, AlertCircle, Copy, Check, PlusCircle, Home, WifiOff } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
@@ -198,6 +198,22 @@ export default function TrackingPage() {
             <div className="sm:hidden flex items-center gap-2 bg-red-50 border border-red-200 px-4 py-2.5 mb-4 text-xs text-red-600">
               <WifiOff className="w-3.5 h-3.5 shrink-0" />
               <span>Sin conexión en vivo — los datos podrían no estar actualizados.</span>
+            </div>
+          )}
+
+          {complaint && !isNew && (
+            <div className="flex items-center justify-between border border-crimson-100 bg-crimson-50/40 px-4 py-2.5 mb-4">
+              <div className="flex items-center gap-2.5">
+                <span className="text-[10px] font-bold text-crimson-500 uppercase tracking-widest">Folio</span>
+                <span className="font-mono font-bold text-gray-800 text-sm tracking-wider">{folio}</span>
+              </div>
+              <button
+                onClick={copyFolio}
+                className="flex items-center gap-1.5 text-xs text-crimson-600 hover:text-crimson-800 transition-colors border border-crimson-200 hover:border-crimson-400 bg-white px-2.5 py-1"
+              >
+                {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                {copied ? "Copiado" : "Copiar"}
+              </button>
             </div>
           )}
 

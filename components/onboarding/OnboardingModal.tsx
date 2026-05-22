@@ -44,6 +44,13 @@ export function OnboardingModal() {
     }
   }, []);
 
+  useEffect(() => {
+    if (!visible) return;
+    const handler = (e: KeyboardEvent) => { if (e.key === "Escape") dismiss(); };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [visible]);
+
   function dismiss() {
     localStorage.setItem(ONBOARDING_KEY, "1");
     setVisible(false);

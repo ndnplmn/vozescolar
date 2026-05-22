@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#76082c" />
+  <title>Sin conexión — VozEscolar</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #fff;
+      color: #111;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      border-bottom: 1px solid #f0d6de;
+      padding: 1rem 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .logo-box {
+      width: 36px;
+      height: 36px;
+      background: #76082c;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .logo-box svg { width: 20px; height: 20px; fill: white; }
+
+    .brand-name {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: #76082c;
+      line-height: 1;
+      margin-bottom: 2px;
+    }
+
+    .brand-sub {
+      font-size: 12px;
+      font-weight: 500;
+      color: #374151;
+      line-height: 1;
+    }
+
+    main {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1.5rem;
+    }
+
+    .card {
+      width: 100%;
+      max-width: 400px;
+      text-align: center;
+    }
+
+    .divider {
+      display: block;
+      width: 32px;
+      height: 2px;
+      background: #76082c;
+      margin: 0 auto 2rem;
+    }
+
+    .icon-wrap {
+      width: 64px;
+      height: 64px;
+      background: #fdf2f5;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 1.5rem;
+    }
+
+    .icon-wrap svg {
+      width: 28px;
+      height: 28px;
+      color: #76082c;
+      stroke: #76082c;
+    }
+
+    h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #111;
+      margin-bottom: 0.75rem;
+      line-height: 1.2;
+    }
+
+    p {
+      font-size: 0.875rem;
+      color: #6b7280;
+      line-height: 1.6;
+      margin-bottom: 2rem;
+    }
+
+    .note {
+      font-size: 0.75rem;
+      color: #9ca3af;
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      padding: 0.75rem 1rem;
+      margin-bottom: 1.5rem;
+      text-align: left;
+    }
+
+    .note strong { color: #374151; }
+
+    button {
+      background: #76082c;
+      color: #fff;
+      border: none;
+      font-size: 0.875rem;
+      font-weight: 600;
+      padding: 0.75rem 2.5rem;
+      cursor: pointer;
+      letter-spacing: 0.05em;
+      transition: background 0.15s;
+    }
+
+    button:hover { background: #5e0623; }
+
+    footer {
+      border-top: 1px solid #fce7ee;
+      padding: 1rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.75rem;
+      color: #9ca3af;
+    }
+
+    footer span:last-child { color: #76082c; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo-box">
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+      </svg>
+    </div>
+    <div>
+      <p class="brand-name">CETIS 52</p>
+      <p class="brand-sub">Hermenegildo Galeana</p>
+    </div>
+  </header>
+
+  <main>
+    <div class="card">
+      <span class="divider"></span>
+
+      <div class="icon-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="1" y1="1" x2="23" y2="23"/>
+          <path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"/>
+          <path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"/>
+          <path d="M10.71 5.05A16 16 0 0 1 22.56 9"/>
+          <path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"/>
+          <path d="M8.53 16.11a6 6 0 0 1 6.95 0"/>
+          <line x1="12" y1="20" x2="12.01" y2="20"/>
+        </svg>
+      </div>
+
+      <h1>Sin conexión a internet</h1>
+
+      <p>
+        No fue posible cargar esta página. Revisa tu conexión y vuelve a intentarlo.
+      </p>
+
+      <div class="note">
+        <strong>¿Ya enviaste un reporte?</strong><br />
+        Este error no lo afecta — está guardado de forma segura. Cuando recuperes conexión podrás consultarlo con tu número de folio.
+      </div>
+
+      <button onclick="window.location.reload()">Reintentar</button>
+    </div>
+  </main>
+
+  <footer>
+    <span>© <script>document.write(new Date().getFullYear())</script> CETIS 52 Hermenegildo Galeana</span>
+    <span>VozEscolar</span>
+  </footer>
+</body>
+</html>

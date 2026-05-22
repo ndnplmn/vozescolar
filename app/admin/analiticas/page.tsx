@@ -1,10 +1,21 @@
 "use client";
 import { useEffect, useState } from "react";
+import dynamic from "next/dynamic";
 import { AdminLayout } from "@/components/admin/AdminLayout";
-import { CategoryPieChart } from "@/components/admin/charts/CategoryPieChart";
-import { UrgencyDonut } from "@/components/admin/charts/UrgencyDonut";
-import { ComplaintsLineChart } from "@/components/admin/charts/ComplaintsLineChart";
 import { Complaint } from "@/lib/types";
+
+const CategoryPieChart = dynamic(
+  () => import("@/components/admin/charts/CategoryPieChart").then(m => ({ default: m.CategoryPieChart })),
+  { ssr: false, loading: () => <div className="h-48 bg-gray-100 animate-pulse" /> }
+);
+const UrgencyDonut = dynamic(
+  () => import("@/components/admin/charts/UrgencyDonut").then(m => ({ default: m.UrgencyDonut })),
+  { ssr: false, loading: () => <div className="h-48 bg-gray-100 animate-pulse" /> }
+);
+const ComplaintsLineChart = dynamic(
+  () => import("@/components/admin/charts/ComplaintsLineChart").then(m => ({ default: m.ComplaintsLineChart })),
+  { ssr: false, loading: () => <div className="h-48 bg-gray-100 animate-pulse" /> }
+);
 import { Sparkles, TrendingUp, AlertTriangle, CheckCircle2, Inbox, PercentIcon, Clock, Timer } from "lucide-react";
 
 export default function AnalyticsPage() {

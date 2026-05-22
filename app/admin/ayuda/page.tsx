@@ -112,7 +112,7 @@ export default function AyudaPage() {
   function toggle(id: string) {
     setOpenSections(prev => {
       const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
+      if (next.has(id)) { next.delete(id); } else { next.add(id); }
       return next;
     });
   }
@@ -433,7 +433,7 @@ export default function AyudaPage() {
               <p>Puedes ingresar la URL de una imagen para reemplazar el logo actual. Usa una imagen cuadrada en formato SVG o PNG de al menos 64×64 px.</p>
             </Step>
             <Step n={3} title='Guardar cambios'>
-              <p>Haz clic en <strong>"Guardar cambios"</strong>. Los cambios se sincronizan en la nube y son visibles en todos los dispositivos de inmediato.</p>
+              <p>Haz clic en <strong>&ldquo;Guardar cambios&rdquo;</strong>. Los cambios se sincronizan en la nube y son visibles en todos los dispositivos de inmediato.</p>
             </Step>
           </div>
           <Callout type="info">
