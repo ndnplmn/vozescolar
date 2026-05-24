@@ -72,7 +72,7 @@ export default function AnalyticsPage() {
 
   return (
     <AdminLayout>
-      <div className="p-6 max-w-5xl mx-auto space-y-6">
+      <div className="px-4 py-6 sm:p-6 max-w-5xl mx-auto space-y-6">
 
         {/* Metric cards */}
         <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">

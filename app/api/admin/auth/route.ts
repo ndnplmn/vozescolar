@@ -46,8 +46,13 @@ export async function POST(req: NextRequest) {
   // Successful login — clear the counter
   loginAttempts.delete(ip);
 
+  const secret = process.env.ADMIN_SESSION_SECRET;
+  if (!secret) {
+    return NextResponse.json({ ok: false, error: "Error de configuración del servidor." }, { status: 500 });
+  }
+
   const res = NextResponse.json({ ok: true });
-  res.cookies.set(COOKIE, process.env.ADMIN_SESSION_SECRET!, {
+  res.cookies.set(COOKIE, secret, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "strict",
@@ -59,6 +64,6 @@ export async function POST(req: NextRequest) {
 
 export async function DELETE() {
   const res = NextResponse.json({ ok: true });
-  res.cookies.set(COOKIE, "", { httpOnly: true, sameSite: "lax", path: "/", maxAge: 0 });
+  res.cookies.set(COOKIE, "", { httpOnly: true, sameSite: "strict", path: "/", maxAge: 0 });
   return res;
 }

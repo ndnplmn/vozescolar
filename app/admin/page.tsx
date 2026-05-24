@@ -65,7 +65,7 @@ export default function AdminPage() {
 
   return (
     <AdminLayout>
-      <div className="p-6 max-w-5xl mx-auto space-y-6">
+      <div className="px-4 py-6 sm:p-6 max-w-5xl mx-auto space-y-6">
 
         {/* Stats row */}
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">

@@ -42,7 +42,7 @@ export default function ConfiguracionPage() {
 
   return (
     <AdminLayout>
-      <div className="p-6 max-w-2xl mx-auto space-y-5">
+      <div className="px-4 py-6 sm:p-6 max-w-2xl mx-auto space-y-5">
 
         {/* Institución */}
         <div className="bg-white border border-gray-200">

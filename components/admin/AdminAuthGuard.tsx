@@ -18,7 +18,22 @@ export function AdminAuthGuard({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    setAuthenticated(sessionStorage.getItem(SESSION_KEY) === "1");
+    // Fast path: already verified in this tab
+    if (sessionStorage.getItem(SESSION_KEY) === "1") {
+      setAuthenticated(true);
+      return;
+    }
+    // Slow path: cookie may be valid (other tab, page refresh) — ask the server
+    fetch("/api/admin/check")
+      .then(r => {
+        if (r.ok) {
+          sessionStorage.setItem(SESSION_KEY, "1");
+          setAuthenticated(true);
+        } else {
+          setAuthenticated(false);
+        }
+      })
+      .catch(() => setAuthenticated(false));
   }, []);
 
   async function handleSubmit() {

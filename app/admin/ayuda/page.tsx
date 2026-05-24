@@ -536,7 +536,7 @@ export default function AyudaPage() {
 
   return (
     <AdminLayout>
-      <div className="p-6 max-w-3xl mx-auto">
+      <div className="px-4 py-6 sm:p-6 max-w-3xl mx-auto">
 
         {/* Header */}
         <div className="mb-10">

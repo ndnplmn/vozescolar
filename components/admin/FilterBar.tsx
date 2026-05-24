@@ -26,7 +26,7 @@ export function FilterBar({ filters, onChange }: { filters: Filters; onChange: (
       <div className="flex flex-wrap gap-2">
 
         {/* Search */}
-        <div className="relative flex-1 min-w-48">
+        <div className="relative w-full sm:flex-1 sm:min-w-48">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
           <input
             value={filters.search}

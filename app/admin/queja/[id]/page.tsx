@@ -123,7 +123,7 @@ export default function ComplaintDetailPage() {
   // Loading skeleton
   if (loading) return (
     <AdminLayout>
-      <div className="p-6 max-w-5xl mx-auto space-y-4">
+      <div className="px-4 py-6 sm:p-6 max-w-5xl mx-auto space-y-4">
         <div className="h-8 w-32 bg-gray-200 animate-pulse" />
         <div className="h-48 bg-gray-200 animate-pulse" />
         <div className="h-32 bg-gray-200 animate-pulse" />
@@ -134,7 +134,7 @@ export default function ComplaintDetailPage() {
   // Not found
   if (!complaint) return (
     <AdminLayout>
-      <div className="p-6 max-w-5xl mx-auto">
+      <div className="px-4 py-6 sm:p-6 max-w-5xl mx-auto">
         <Link
           href="/admin"
           className="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-crimson-600 transition-colors mb-6 group"
@@ -162,7 +162,7 @@ export default function ComplaintDetailPage() {
 
   return (
     <AdminLayout>
-      <div className="p-6 max-w-5xl mx-auto">
+      <div className="px-4 py-6 sm:p-6 max-w-5xl mx-auto">
 
         {/* Back */}
         <Link
@@ -482,14 +482,14 @@ export default function ComplaintDetailPage() {
               <div className="flex gap-3">
                 <button
                   onClick={() => setCloseModalOpen(false)}
-                  className="flex-1 h-10 border border-gray-200 text-sm text-gray-600 hover:bg-gray-50 transition-colors font-medium"
+                  className="flex-1 h-11 border border-gray-200 text-sm text-gray-600 hover:bg-gray-50 transition-colors font-medium"
                 >
                   Cancelar
                 </button>
                 <button
                   onClick={() => closeCase(closeReason)}
                   disabled={!closeReason || closing}
-                  className="flex-1 h-10 bg-gray-700 hover:bg-gray-800 disabled:opacity-40 text-white text-sm font-semibold transition-colors flex items-center justify-center gap-2"
+                  className="flex-1 h-11 bg-gray-700 hover:bg-gray-800 disabled:opacity-40 text-white text-sm font-semibold transition-colors flex items-center justify-center gap-2"
                 >
                   {closing ? (
                     <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
