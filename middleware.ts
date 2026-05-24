@@ -17,7 +17,10 @@ export function middleware(req: NextRequest) {
     if (pathname.startsWith("/api/")) {
       return NextResponse.json({ error: "No autorizado" }, { status: 401 });
     }
-    // Page routes: redirect to /admin (where AdminAuthGuard shows the PIN form)
+    // /admin exact: let through — AdminAuthGuard renders the PIN form client-side
+    // (redirecting here would loop since /admin is in the matcher)
+    if (pathname === "/admin") return NextResponse.next();
+    // Sub-paths (/admin/analiticas, /admin/queja/…): redirect to login
     return NextResponse.redirect(new URL("/admin", req.url));
   }
 
