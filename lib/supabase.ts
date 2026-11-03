@@ -7,15 +7,31 @@ const DEFAULT_SUPABASE_ANON_KEY =
 const DEFAULT_SUPABASE_SERVICE_ROLE_KEY =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ3bW1ubGtiZXJ3Z2pxaWtqdWFwIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc5MzY2MzgxNSwiZXhwIjoyMTA5MjM5ODE1fQ.tAqYHtW1kZ8WPTbt8bAAK2tVOiOGjwrpIagz85qT8kw";
 
-// Ensure active project URL is used even if stale environment variables exist in deployment
+function isValidKeyForProject(key: string | undefined): boolean {
+  if (!key) return false;
+  try {
+    const parts = key.split(".");
+    if (parts.length !== 3) return false;
+    const json = typeof atob === "function"
+      ? atob(parts[1].replace(/-/g, "+").replace(/_/g, "/"))
+      : Buffer.from(parts[1], "base64").toString("utf8");
+    const payload = JSON.parse(json);
+    return payload.ref === "bwmmnlkberwgjqikjuap";
+  } catch {
+    return false;
+  }
+}
+
 const rawUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const url = (!rawUrl || rawUrl.includes("mozakwmptodsecdgrkwe")) ? DEFAULT_SUPABASE_URL : rawUrl;
+const url = (!rawUrl || !rawUrl.includes("bwmmnlkberwgjqikjuap")) ? DEFAULT_SUPABASE_URL : rawUrl;
 
-const rawAnon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-const anon = (!rawAnon || rawAnon.includes("mozakwmptodsecdgrkwe")) ? DEFAULT_SUPABASE_ANON_KEY : rawAnon;
+const anon = isValidKeyForProject(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
+  ? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  : DEFAULT_SUPABASE_ANON_KEY;
 
-const rawService = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const serviceRole = (!rawService || rawService.includes("mozakwmptodsecdgrkwe")) ? DEFAULT_SUPABASE_SERVICE_ROLE_KEY : rawService;
+const serviceRole = isValidKeyForProject(process.env.SUPABASE_SERVICE_ROLE_KEY)
+  ? process.env.SUPABASE_SERVICE_ROLE_KEY!
+  : DEFAULT_SUPABASE_SERVICE_ROLE_KEY;
 
 // Browser client — uses anon key, respects RLS
 export const supabase = createClient(url, anon, {
